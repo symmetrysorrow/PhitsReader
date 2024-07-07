@@ -42,6 +42,26 @@ boost::property_tree::ptree to_ptree(const EventInfo& e) {
     return pt;
 }
 
+std::vector<float> split_line(const std::string& line) {
+    std::vector<float> column;
+    std::istringstream stream(line);
+    std::string token;
+
+    while (stream >> token) {  // 空白をスキップしてトークンを取得
+        try {
+            column.push_back(std::stof(token));  // トークンをfloatに変換
+        }
+        catch (const std::invalid_argument& e) {
+            std::cerr << "Invalid argument: " << token << " cannot be converted to float." << std::endl;
+        }
+        catch (const std::out_of_range& e) {
+            std::cerr << "Out of range: " << token << " is out of range for float." << std::endl;
+        }
+    }
+
+    return column;
+}
+
 int main() {
 
     int counter = 0;
@@ -88,31 +108,41 @@ int main() {
         std::cerr << "Failed to open file: " << path << std::endl;
         return 1;
     }
+    std::cout << "loading file\n";
+    std::vector<std::string> lines;
+    lines.reserve(19000000);
 
+    std::stringstream buffer;
+    buffer << file.rdbuf(); // ファイルの内容を一気に読み込む
+
+    file.close(); // ファイルを閉じる
+    std::cout << "finish loading file\nconverting to vector\n";
+    // bufferから改行ごとに行を取り出してlinesに追加
     std::string line;
-    while (std::getline(file, line))
+    while (std::getline(buffer, line)) {
+        lines.push_back(line); // 改行ごとにvectorに挿入
+    }
+
+    // bufferを解放
+    buffer.str(std::string()); // stringstreamの内容をクリア
+    buffer.clear();
+    std::cout << "Finish converting and clear buffer\n";
+    //std::string line;
+    for (const auto& line:lines)
     {
-        std::cout << counter << "\n";
+       // std::cout << counter << "\n";
         counter += 1;
         // 文字列を空白文字で分割して float に変換する例
-        std::regex ws_re("\\s+");
-        std::vector<float> column;
-        std::sregex_token_iterator iter(line.begin(), line.end(), ws_re, -1);
-        std::sregex_token_iterator token_end;
 
-        for (; iter != token_end; ++iter) {
-            if (!iter->str().empty()) {
-                try {
-                    column.push_back(std::stof(*iter));  // std::stof を使って文字列を float に変換
-                }
-                catch (const std::invalid_argument& e) {
-                    std::cerr << "Invalid argument: " << *iter << " cannot be converted to float." << std::endl;
-                }
-                catch (const std::out_of_range& e) {
-                    std::cerr << "Out of range: " << *iter << " is out of range for float." << std::endl;
-                }
-            }
+        std::vector<float> column=split_line(line);
+
+        for (const auto& ele : column)
+        {
+            std::cout << ele<<"\n";
         }
+        int some;
+        if (counter == 30) { std::cin>>some; }
+        
         if (static_cast<int>(ncol) == 1)
         {
             ncol = 4;
@@ -309,7 +339,7 @@ int main() {
 
     }
 
-    file.close(); // ファイルを閉じる
+   
 
     return 0;
 }
