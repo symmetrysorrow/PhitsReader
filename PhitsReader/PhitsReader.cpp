@@ -1,21 +1,22 @@
-﻿#include <iostream>
+﻿#pragma once
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
-#include <regex>
 #include <map>
 #include <filesystem>
 #include <unordered_set>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
+//intと粒子の種類の対応
 std::map<int, std::string> itype = {
     {12, "electron"},
     {13, "positron"},
     {14, "photon"}
 };
-
-inline std::string GetItype(const float& ityp) { 
+//数字を受け取り対応する粒子を返す関数
+inline std::string GetItype(const float& ityp) {
     auto it = itype.find(static_cast<int>(ityp));
     if (it != itype.end()) {
         return it->second;
@@ -24,9 +25,7 @@ inline std::string GetItype(const float& ityp) {
         return "unknown";  // デフォルト値を返す
     }
 };
-
-
-
+//Eventに関する構造体
 struct EventInfo {
     int ityp;
     std::vector<float> x;
@@ -50,53 +49,6 @@ boost::property_tree::ptree to_ptree(const std::vector<float>& vec) {
     return pt;
 }
 
-void display_map(const std::map<int, EventInfo>& inner_map) {
-    for (const auto& pair : inner_map) {
-        std::cout << "Inner key: " << pair.first << std::endl;
-        std::cout << "  ityp: " << pair.second.ityp << std::endl;
-        std::cout << "  x: ";
-        for (const auto& val : pair.second.x) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "  y: ";
-        for (const auto& val : pair.second.y) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "  z: ";
-        for (const auto& val : pair.second.z) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "  E: ";
-        for (const auto& val : pair.second.E) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "  x_deposit: ";
-        for (const auto& val : pair.second.x_deposit) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "  y_deposit: ";
-        for (const auto& val : pair.second.y_deposit) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "  z_deposit: ";
-        for (const auto& val : pair.second.z_deposit) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "  E_deposit: ";
-        for (const auto& val : pair.second.E_deposit) {
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-    }
-}
-
 // EventInfoをptreeに変換する関数
 boost::property_tree::ptree to_ptree(const EventInfo& event) {
     boost::property_tree::ptree pt;
@@ -111,7 +63,7 @@ boost::property_tree::ptree to_ptree(const EventInfo& event) {
     pt.add_child("E_deposit", to_ptree(event.E_deposit));
     return pt;
 }
-
+//空白で文章を分割する関数
 std::vector<float> split_line(const std::string& line) {
     std::vector<float> column;
     std::istringstream stream(line);
@@ -131,7 +83,6 @@ std::vector<float> split_line(const std::string& line) {
 
     return column;
 }
-
 int main() {
 
     int counter = 0;
@@ -147,15 +98,14 @@ int main() {
     boost::property_tree::read_json("input.json", pt);
     const auto output = pt.get<std::string>("output");
     std::string path = "dumpall.dat";
-    const int n_abs = pt.get<int>("n_abs");
-    std::vector<double> block(n_abs + 1);
 
     std::map<int, EventInfo> history;
     std::map<int, std::map<int, EventInfo>> batch;
-    float ncol = 1;
-    std::vector<float> xyz = { 0,0,0 };
-    std::vector<float> cxyz = { 0,0,0 };
 
+    //Variables used for calculation
+    float ncol = 1;
+    std::vector<float> xyz= {0,0,0};
+    std::vector<float> cxyz = {0,0,0};
     float cnt = 0;
     float num = 0;
     float nocas = 0;
@@ -163,14 +113,6 @@ int main() {
     std::vector<float> reg(2);
     std::vector<float> name;
     float benergy, cenergy, ityp, nclsts, jcoll, energy_new, ncl, energy, energy_dps;
-    //float iclusts;
-    constexpr double start = -1.0;
-    constexpr double end = 1.0;
-    const double step = (end - start) / static_cast<double>(n_abs);
-
-    for (int i = 0; i <= n_abs; ++i) {
-        block[i] = start + i * step;
-    }
 
     std::ifstream file(path, std::ios::binary);
 
@@ -178,31 +120,13 @@ int main() {
         std::cerr << "Failed to open file: " << path << std::endl;
         return 1;
     }
-    std::cout << "loading file...\n";
-    std::vector<std::string> lines;
-    {
-        std::stringstream buffer;
-        buffer << file.rdbuf(); // ファイルの内容を一気に読み込む
-
-        file.close(); // ファイルを閉じる
-        std::cout << "finish loading file\nconverting to vector...\n";
-        // bufferから改行ごとに行を取り出してlinesに追加
-        std::string line;
-        while (std::getline(buffer, line)) {
-            lines.push_back(line); // 改行ごとにvectorに挿入
-        }
-
-        // bufferを解放
-        buffer.str(std::string()); // stringstreamの内容をクリア
-        buffer.clear();
-        std::cout << "Finish converting and clear buffer\nProcessing data...\n";
-    }
-    
-
-    for (const auto& line:lines)
+    std::cout << "Processing file...\n";
+        
+    std::string line;
+    while (std::getline(file, line)) 
     {
         counter++;
-        
+#if 0
         if (counter % 100000 == 0)
         {
             double progress = static_cast<int>(ncol) == 2 ? 100 : static_cast<double>(counter) / lines.size() * 100.0;
@@ -210,7 +134,7 @@ int main() {
             
             std::cout.flush();
         }
-#if 0
+
         if (counter == 10000)
         {
             break;
@@ -247,6 +171,10 @@ int main() {
                     if (no > 1)
                     {
                         batch[static_cast<int>(nocas)] = history;
+                        history.clear();
+                        std::map<int, EventInfo> emptyMap;
+                        history.swap(emptyMap);
+
                         if (event_number == nocas || static_cast<int>(event_number) == 0) {
                             //plot
                         }
@@ -296,21 +224,14 @@ int main() {
             {
                 if (!(static_cast<int>(ncol) == 13 || static_cast<int>(ncol) == 14)) { cnt = -1; }
                 if (static_cast<int>(ityp) == 14 || static_cast<int>(ityp) == 12 || static_cast<int>(ityp) == 13) {
-                    if (ncol == 4) { /*std::cout << "---Event" << nocas << "---\n";*/ }
-                    //std::cout << num << "\n NCOL:" << ncol << "\nno:" << no << "\n ityp:" << GetItype(ityp) << "\n";
-                  //  std::cout << "reg:";
-                    //for (const auto& l : reg) { std::cout << l << ","; }
-                    //std::cout << "\n name:";
-                   // for (const auto& l : name) { std::cout << l << ","; }
-                    //std::cout << "\n energy:" << benergy << "MeV \n  c-energy:" << cenergy << "MeV \n c-position:";
-                  //  for (const auto& l : cxyz) { std::cout << l << ","; }
-                   // std::cout << "\n -----------\n";
+                    if (ncol == 4) { }
+                   
 
                     if (history.find(static_cast<int>(no)) == history.end())
                     {
                         EventInfo new_event;
                         new_event.ityp = static_cast<int>(ityp);
-                        history[no] = new_event;
+                        history[static_cast<int>(no)] = new_event;
                     }
                     history[static_cast<int>(no)].x.push_back(cxyz[0]);
                     history[static_cast<int>(no)].y.push_back(cxyz[1]);
@@ -323,8 +244,7 @@ int main() {
                         history[static_cast<int>(no)].x_deposit.push_back(cxyz[0]);
                         history[static_cast<int>(no)].y_deposit.push_back(cxyz[1]);
                         history[static_cast<int>(no)].z_deposit.push_back(cxyz[2]);
-                        //std::cout << "deposit energy:" << energy << "\n";
-                       // std::cout << "--------\n";
+                        
                     }
                 }
             }
@@ -345,9 +265,6 @@ int main() {
                     num += 1;
                     continue;
                 }
-
-                //std::cout << "nclsts:" << nclsts << "\n jcoll:" << jcoll << "\n------ \n";
-
             }
 
         }
@@ -367,16 +284,13 @@ int main() {
                     }
                     energy_dps = benergy - energy_new;
 
-                   // std::cout << "ityp:" << GetItype(ityp) << "\n";
-                   // std::cout << "energy: " << energy << "MeV\n------";
                     if (static_cast<int>(ncl) == static_cast<int>(nclsts) - 1)
                     {
                         ncol = 13;
-                        history[static_cast<int>(no)].E_deposit.push_back(energy_dps);;
+                        history[static_cast<int>(no)].E_deposit.push_back(energy_dps);
                         history[static_cast<int>(no)].x_deposit.push_back(cxyz[0]);
                         history[static_cast<int>(no)].y_deposit.push_back(cxyz[1]);
                         history[static_cast<int>(no)].z_deposit.push_back(cxyz[2]);
-                        //std::cout << "deposit energy:" << energy_dps << "\n------";
                     }
                     else { ncl += 1; }
                     cnt = -1;
@@ -396,10 +310,15 @@ int main() {
         num++;
     }
 
-    lines.clear();
-    lines.shrink_to_fit();
+    file.close();
+    history.clear();
+    std::map<int, EventInfo>(history).swap(history);
+    name.clear();
+    name.shrink_to_fit();
+    //lines.clear();
+   // lines.shrink_to_fit();
 
-    std::cout<<"\nWriting output.json...\n";
+    std::cout<<"Finished\nWriting output.json...\n";
 
     // 出力ファイルのパス
     std::string output_file = "OutputCpp/output.json";
@@ -411,23 +330,22 @@ int main() {
     try {
         // boost::property_tree::ptreeにデータを変換
         boost::property_tree::ptree pt_batch;
-        int count = 0;
         for (const auto& outer_pair : batch) {
             boost::property_tree::ptree pt_inner;
-            std::cout << count << " / ";
-            count++;
+
             for (const auto& inner_pair : outer_pair.second) {
                 pt_inner.add_child(std::to_string(inner_pair.first), to_ptree(inner_pair.second));
             }
             pt_batch.add_child(std::to_string(outer_pair.first), pt_inner);
         }
-        std::cout << "Converting finished\n";
         // JSONファイルに書き込み
         boost::property_tree::write_json(output_file, pt_batch);
 
-        std::cout << "\nWriting output.json...\n";
-        std::cout << "Output file path: " << output_file << std::endl;
-        std::cout << "Finished!\n";
+        std::cout << "Writing output.json...\n";
+        std::cout << "Completed!\n";
+
+        int some;
+        std::cin >> some;
 
     }
     catch (const std::exception& e) {
