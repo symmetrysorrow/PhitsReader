@@ -4,6 +4,7 @@
 #include <string>
 #include <regex>
 #include <map>
+#include <filesystem>
 #include <unordered_set>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -14,7 +15,15 @@ std::map<int, std::string> itype = {
     {14, "photon"}
 };
 
-inline std::string GetItype(const float& ityp) { return itype[static_cast<int>(ityp)]; };
+inline std::string GetItype(const float& ityp) { 
+    auto it = itype.find(static_cast<int>(ityp));
+    if (it != itype.end()) {
+        return it->second;
+    }
+    else {
+        return "unknown";  // デフォルト値を返す
+    }
+};
 
 struct EventInfo {
     int ityp;
@@ -90,7 +99,7 @@ int main() {
     float num = 0;
     float nocas = 0;
     float no = 0;
-    std::vector<float> reg;
+    std::vector<float> reg(2);
     std::vector<float> name;
     float benergy, cenergy, ityp, nclsts, jcoll, energy_new, ncl, energy, energy_dps;
     //float iclusts;
@@ -108,15 +117,14 @@ int main() {
         std::cerr << "Failed to open file: " << path << std::endl;
         return 1;
     }
-    std::cout << "loading file\n";
+    std::cout << "loading file...\n";
     std::vector<std::string> lines;
-    lines.reserve(19000000);
 
     std::stringstream buffer;
     buffer << file.rdbuf(); // ファイルの内容を一気に読み込む
 
     file.close(); // ファイルを閉じる
-    std::cout << "finish loading file\nconverting to vector\n";
+    std::cout << "finish loading file\nconverting to vector...\n";
     // bufferから改行ごとに行を取り出してlinesに追加
     std::string line;
     while (std::getline(buffer, line)) {
@@ -126,22 +134,33 @@ int main() {
     // bufferを解放
     buffer.str(std::string()); // stringstreamの内容をクリア
     buffer.clear();
-    std::cout << "Finish converting and clear buffer\n";
-    //std::string line;
+    std::cout << "Finish converting and clear buffer\nProcessing data\n";
+
     for (const auto& line:lines)
     {
-       // std::cout << counter << "\n";
-        counter += 1;
-        // 文字列を空白文字で分割して float に変換する例
-
-        std::vector<float> column=split_line(line);
-
-        for (const auto& ele : column)
+        counter++;
+        
+        if (counter % 100000 == 0)
         {
-            std::cout << ele<<"\n";
+            double progress = counter == lines.size() ? 100 : static_cast<double>(counter) / lines.size() * 100.0;
+            std::cout << "\rProgress: " << std::fixed << std::setprecision(0) << progress << "%";
+            
+            std::cout.flush();
         }
-        int some;
-        if (counter == 30) { std::cin>>some; }
+#if 0
+        if (counter == 10000)
+        {
+            break;
+        }
+#endif
+        std::vector<float> column=split_line(line);
+#if 0
+        for (const auto& col : column)
+        {
+            std::cout << col << "/";
+        }
+#endif
+        //std::cout << "tag ncol " << ncol << "\n"<<"    tag cnt "<<cnt<<"\n";
         
         if (static_cast<int>(ncol) == 1)
         {
@@ -149,7 +168,7 @@ int main() {
             cnt = 0;
             nocas = 0;
             no = 0;
-            std::cout << "Start calculation!!!\n";
+            continue;
         }
         std::unordered_set<int> valid_values = { 1, 2, 3, 17 };
         if (valid_values.find(static_cast<int>(ncol)) == valid_values.end())
@@ -177,10 +196,9 @@ int main() {
                     event.ityp = 14;
                     history[1] = event;
                 }
-
             }
 
-            if (static_cast<int>(cnt) == 1 && static_cast<int>(ncol) == 4) { nocas = column[0]; }
+            if (static_cast<int>(cnt) == 1 && static_cast<int>(ncol) == 4) {nocas = column[0]; }
 
             if (static_cast<int>(cnt) == 2)
             {
@@ -189,7 +207,7 @@ int main() {
                 if (ityp != 12 && ityp != 13) { cnt += 1; }
             }
 
-            if (static_cast<int>(cnt) == 5) { std::copy_n(column.begin(), 3, reg.begin()); }
+            if (static_cast<int>(cnt) == 5 && reg.size()>=2) {std::copy_n(column.begin(), 2, reg.begin()); }
 
             if (static_cast<int>(cnt) == 8) { name = column; }
 
@@ -213,17 +231,17 @@ int main() {
             }
             if (static_cast<int>(cnt) == 16)
             {
-                if (!(static_cast<int>(ncol) == 13 || static_cast<int>(ncol) == 14)) { cnt += 1; }
+                if (!(static_cast<int>(ncol) == 13 || static_cast<int>(ncol) == 14)) { cnt = -1; }
                 if (static_cast<int>(ityp) == 14 || static_cast<int>(ityp) == 12 || static_cast<int>(ityp) == 13) {
-                    if (ncol == 4) { std::cout << "---Event" << nocas << "---\n"; }
-                    std::cout << num << "\n NCOL:" << ncol << "\nno:" << no << "\n ityp:" << GetItype(ityp) << "\n";
-                    std::cout << "reg:";
-                    for (const auto& l : reg) { std::cout << l << ","; }
-                    std::cout << "\n name:";
-                    for (const auto& l : name) { std::cout << l << ","; }
-                    std::cout << "\n energy:" << benergy << "MeV \n  c-energy:" << cenergy << "MeV \n c-position:";
-                    for (const auto& l : cxyz) { std::cout << l << ","; }
-                    std::cout << "\n -----------";
+                    if (ncol == 4) { /*std::cout << "---Event" << nocas << "---\n";*/ }
+                    //std::cout << num << "\n NCOL:" << ncol << "\nno:" << no << "\n ityp:" << GetItype(ityp) << "\n";
+                  //  std::cout << "reg:";
+                    //for (const auto& l : reg) { std::cout << l << ","; }
+                    //std::cout << "\n name:";
+                   // for (const auto& l : name) { std::cout << l << ","; }
+                    //std::cout << "\n energy:" << benergy << "MeV \n  c-energy:" << cenergy << "MeV \n c-position:";
+                  //  for (const auto& l : cxyz) { std::cout << l << ","; }
+                   // std::cout << "\n -----------\n";
 
                     if (history.find(static_cast<int>(no)) == history.end())
                     {
@@ -240,8 +258,8 @@ int main() {
                         history[static_cast<int>(no)].x_deposit = cxyz[0];
                         history[static_cast<int>(no)].y_deposit = cxyz[1];
                         history[static_cast<int>(no)].z_deposit = cxyz[2];
-                        std::cout << "deposit energy:" << energy << "\n";
-                        std::cout << "--------\n";
+                        //std::cout << "deposit energy:" << energy << "\n";
+                       // std::cout << "--------\n";
                     }
                 }
             }
@@ -256,8 +274,6 @@ int main() {
                 ncl = 0;
                 energy_new = 0;
 
-                std::cout << "nclsts:" << nclsts << "\n jcoll:" << jcoll << "\n------ \n";
-
                 if (static_cast<int>(jcoll) == 14)
                 {
                     cnt += 1;
@@ -265,13 +281,14 @@ int main() {
                     continue;
                 }
 
+                //std::cout << "nclsts:" << nclsts << "\n jcoll:" << jcoll << "\n------ \n";
+
             }
 
         }
 
         if (static_cast<int>(ncol) == 17)
         {
-            //if(cnt==0){iclusts=column[0];}
             if (static_cast<int>(cnt == 1)) { ityp = column[3]; }
             if (static_cast<int>(cnt) == 5) { energy = column[1]; }
             if (static_cast<int>(cnt) == 8)
@@ -285,8 +302,8 @@ int main() {
                     }
                     energy_dps = benergy - energy_new;
 
-                    std::cout << "ityp:" << GetItype(ityp) << "\n";
-                    std::cout << "energy: " << energy << "MeV\n------";
+                   // std::cout << "ityp:" << GetItype(ityp) << "\n";
+                   // std::cout << "energy: " << energy << "MeV\n------";
                     if (static_cast<int>(ncl) == static_cast<int>(nclsts) - 1)
                     {
                         ncol = 13;
@@ -294,10 +311,10 @@ int main() {
                         history[static_cast<int>(no)].x_deposit = cxyz[0];
                         history[static_cast<int>(no)].y_deposit = cxyz[1];
                         history[static_cast<int>(no)].z_deposit = cxyz[2];
-                        std::cout << "deposit energy:" << energy_dps << "\n------";
+                        //std::cout << "deposit energy:" << energy_dps << "\n------";
                     }
                     else { ncl += 1; }
-                    cnt += 1;
+                    cnt = -1;
 
                 }
             }
@@ -316,30 +333,26 @@ int main() {
                 pt_batch.add_child(std::to_string(outer_pair.first), pt_inner);
             }
 
-            std::string output_file = "output.json";
+            std::string output_file = "OutputCpp/output.json";
 
-            // JSONファイルに追記で書き込み
+            std::filesystem::create_directory("OutputCpp");
+
             try {
-                boost::property_tree::ptree existing_ptree;
-
-                // 既存のファイルがあるか確認
-                boost::property_tree::read_json(output_file, existing_ptree);
-
-                // 既存のファイルにpt_batchを追記
-                existing_ptree.add_child("batch", pt_batch);
-
-                // ファイルに書き込み
-                boost::property_tree::write_json(output_file, existing_ptree);
-            }
-            catch (const boost::property_tree::json_parser_error& e) {
-                // ファイルが存在しない場合は新規作成
+                // ファイルに上書き
                 boost::property_tree::write_json(output_file, pt_batch);
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Error writing to JSON file: " << e.what() << std::endl;
             }
         }
 
+        cnt++;
+        num++;
     }
 
-   
+    std::cout << "\nFinished!\n";
+    int some;
+    std::cin >> some;
 
     return 0;
 }
