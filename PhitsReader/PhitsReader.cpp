@@ -94,9 +94,9 @@ int main() {
     //all plot[0], one plot[eventnumber], no plot[-1]
     float event_number = -1;
     //read input.json and create values for it
-    boost::property_tree::ptree pt;
-    boost::property_tree::read_json("input.json", pt);
-    const auto output = pt.get<std::string>("output");
+    //boost::property_tree::ptree pt;
+   // boost::property_tree::read_json("input.json", pt);
+    //const auto output = pt.get<std::string>("output");
     std::string path = "dumpall.dat";
 
     std::map<int, EventInfo> history;
@@ -310,7 +310,6 @@ int main() {
         // JSONファイルに書き込み
         boost::property_tree::write_json(output_file, pt_batch);
 
-        std::cout << "Writing output.json...\n";
         std::cout << "Completed!\n";
 
         int some;
