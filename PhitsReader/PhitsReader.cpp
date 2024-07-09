@@ -125,29 +125,7 @@ int main() {
     std::string line;
     while (std::getline(file, line)) 
     {
-        counter++;
-#if 0
-        if (counter % 100000 == 0)
-        {
-            double progress = static_cast<int>(ncol) == 2 ? 100 : static_cast<double>(counter) / lines.size() * 100.0;
-            std::cout << "\rProgress: " << std::fixed << std::setprecision(0) << progress << "%";
-            
-            std::cout.flush();
-        }
-
-        if (counter == 10000)
-        {
-            break;
-        }
-#endif
         std::vector<float> column=split_line(line);
-#if 0
-        for (const auto& col : column)
-        {
-            std::cout << col << "/";
-        }
-#endif
-        //std::cout << "tag ncol " << ncol << "\n"<<"    tag cnt "<<cnt<<"\n";
         
         if (static_cast<int>(ncol) == 1)
         {
@@ -166,8 +144,6 @@ int main() {
                 if (ncol != 4) { cnt += 1; }
                 else
                 {
-                    //print_map(history);
-                    //plot
                     if (no > 1)
                     {
                         batch[static_cast<int>(nocas)] = history;
@@ -175,13 +151,9 @@ int main() {
                         std::map<int, EventInfo> emptyMap;
                         history.swap(emptyMap);
 
-                        if (event_number == nocas || static_cast<int>(event_number) == 0) {
-                            //plot
-                        }
+                        if (event_number == nocas || static_cast<int>(event_number) == 0) {}
                     }
-                    else {
-                        //plot
-                    }
+                    else {}
 
                     EventInfo event;
                     event.ityp = 14;
@@ -226,7 +198,6 @@ int main() {
                 if (static_cast<int>(ityp) == 14 || static_cast<int>(ityp) == 12 || static_cast<int>(ityp) == 13) {
                     if (ncol == 4) { }
                    
-
                     if (history.find(static_cast<int>(no)) == history.end())
                     {
                         EventInfo new_event;
@@ -309,14 +280,12 @@ int main() {
         cnt++;
         num++;
     }
-
+    //history,nameに使われているメモリを解放
     file.close();
     history.clear();
     std::map<int, EventInfo>(history).swap(history);
     name.clear();
     name.shrink_to_fit();
-    //lines.clear();
-   // lines.shrink_to_fit();
 
     std::cout<<"Finished\nWriting output.json...\n";
 
