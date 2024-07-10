@@ -18,10 +18,12 @@ std::map<int, std::string> itype = {
 //数字を受け取り対応する粒子を返す関数
 inline std::string GetItype(const float& ityp) {
     auto it = itype.find(static_cast<int>(ityp));
-    if (it != itype.end()) {
+    if (it != itype.end())
+    {
         return it->second;
     }
-    else {
+    else 
+    {
         return "unknown";  // デフォルト値を返す
     }
 };
@@ -41,7 +43,8 @@ struct EventInfo {
 // Vectorをptreeに変換するヘルパー関数
 boost::property_tree::ptree to_ptree(const std::vector<float>& vec) {
     boost::property_tree::ptree pt;
-    for (const auto& elem : vec) {
+    for (const auto& elem : vec) 
+    {
         boost::property_tree::ptree item;
         item.put("", elem);
         pt.push_back(std::make_pair("", item));
@@ -87,22 +90,23 @@ int main() {
 
     int counter = 0;
 
-    //parameter
-    double emin_electron = 0.1;
-    double emin_photon = 0.001;
+    //定数パラメーター
+    constexpr double emin_electron = 0.1;
+    constexpr double emin_photon = 0.001;
 
     //all plot[0], one plot[eventnumber], no plot[-1]
-    float event_number = -1;
+    constexpr float event_number = -1;
     //read input.json and create values for it
     //boost::property_tree::ptree pt;
    // boost::property_tree::read_json("input.json", pt);
     //const auto output = pt.get<std::string>("output");
     std::string path = "dumpall.dat";
 
+    //各イベントの情報をhistoryに代入し、適宜batchに入力する。最終結果はbatchに入る。
     std::map<int, EventInfo> history;
     std::map<int, std::map<int, EventInfo>> batch;
 
-    //Variables used for calculation
+    //計算に使われる変数
     float ncol = 1;
     std::vector<float> xyz= {0,0,0};
     std::vector<float> cxyz = {0,0,0};
@@ -114,16 +118,19 @@ int main() {
     std::vector<float> name;
     float benergy, cenergy, ityp, nclsts, jcoll, energy_new, ncl, energy, energy_dps;
 
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(path, std::ios::binary);　//ファイルを開く
 
     if (!file.is_open()) {
-        std::cerr << "Failed to open file: " << path << std::endl;
+        std::cerr << "Failed to open file: " << path << std::endl;　//ファイルが開けなかった時のエラーメッセージ
+        int some;
+        std::cin >> some;
         return 1;
     }
+
     std::cout << "Processing file...\n";
         
     std::string line;
-    while (std::getline(file, line)) 
+    while (std::getline(file, line)) //ファイルの各行ごとに実行
     {
         std::vector<float> column=split_line(line);
         
