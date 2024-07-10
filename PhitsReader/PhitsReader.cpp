@@ -118,10 +118,10 @@ int main() {
     std::vector<float> name;
     float benergy, cenergy, ityp, nclsts, jcoll, energy_new, ncl, energy, energy_dps;
 
-    std::ifstream file(path, std::ios::binary);　//ファイルを開く
+    std::ifstream file(path, std::ios::binary);
 
     if (!file.is_open()) {
-        std::cerr << "Failed to open file: " << path << std::endl;　//ファイルが開けなかった時のエラーメッセージ
+        std::cerr << "Failed to open file: " << path << std::endl;
         int some;
         std::cin >> some;
         return 1;
@@ -297,11 +297,11 @@ int main() {
     std::cout<<"Finished\nWriting output.json...\n";
 
     // 出力ファイルのパス
-    std::string output_file = "OutputCpp/output.json";
+    std::string output_file = "output.json";
 
     // 出力ディレクトリを作成
     std::filesystem::path output_path(output_file);
-    std::filesystem::create_directory(output_path.parent_path());
+    //std::filesystem::create_directory(output_path.parent_path());
 
     try {
         // boost::property_tree::ptreeにデータを変換
