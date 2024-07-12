@@ -86,8 +86,9 @@ std::vector<float> split_line(const std::string& line) {
 
     return column;
 }
-int main() {
+extern "C" __declspec(dllexport) void MakeOutput(const char* DatPath) {
 
+    std::string path(DatPath);
     int counter = 0;
 
     //定数パラメーター
@@ -100,7 +101,7 @@ int main() {
     //boost::property_tree::ptree pt;
    // boost::property_tree::read_json("input.json", pt);
     //const auto output = pt.get<std::string>("output");
-    std::string path = "dumpall.dat";
+   // std::string path = "dumpall.dat";
 
     //各イベントの情報をhistoryに代入し、適宜batchに入力する。最終結果はbatchに入る。
     std::map<int, EventInfo> history;
@@ -122,9 +123,7 @@ int main() {
 
     if (!file.is_open()) {
         std::cerr << "Failed to open file: " << path << std::endl;
-        int some;
-        std::cin >> some;
-        return 1;
+        return;
     }
 
     std::cout << "Processing file...\n";
@@ -318,15 +317,11 @@ int main() {
         boost::property_tree::write_json(output_file, pt_batch);
 
         std::cout << "Completed!\n";
-
-        int some;
-        std::cin >> some;
-
     }
     catch (const std::exception& e) {
         std::cerr << "Error writing to JSON file: " << e.what() << std::endl;
-        return 1;
+        return;
     }
 
-    return 0;
+    return;
 }
