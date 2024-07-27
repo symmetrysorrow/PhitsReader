@@ -6,6 +6,7 @@
 #include <map>
 #include <filesystem>
 #include <unordered_set>
+#include <nlohmann/json.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
@@ -16,7 +17,7 @@ std::map<int, std::string> itype = {
     {14, "photon"}
 };
 //数字を受け取り対応する粒子を返す関数
-inline std::string GetItype(const float& ityp) {
+inline std::string GetItype(const double& ityp) {
     auto it = itype.find(static_cast<int>(ityp));
     if (it != itype.end())
     {
@@ -30,18 +31,18 @@ inline std::string GetItype(const float& ityp) {
 //Eventに関する構造体
 struct EventInfo {
     int ityp;
-    std::vector<float> x;
-    std::vector<float> y;
-    std::vector<float> z;
-    std::vector<float> E;
-    std::vector<float> x_deposit;
-    std::vector<float> y_deposit;
-    std::vector<float> z_deposit;
-    std::vector<float> E_deposit;
+    std::vector<double> x;
+    std::vector<double> y;
+    std::vector<double> z;
+    std::vector<double> E;
+    std::vector<double> x_deposit;
+    std::vector<double> y_deposit;
+    std::vector<double> z_deposit;
+    std::vector<double> E_deposit;
 };
 
 // Vectorをptreeに変換するヘルパー関数
-boost::property_tree::ptree to_ptree(const std::vector<float>& vec) {
+boost::property_tree::ptree to_ptree(const std::vector<double>& vec) {
     boost::property_tree::ptree pt;
     for (const auto& elem : vec) 
     {
@@ -67,25 +68,26 @@ boost::property_tree::ptree to_ptree(const EventInfo& event) {
     return pt;
 }
 //空白で文章を分割する関数
-std::vector<float> split_line(const std::string& line) {
-    std::vector<float> column;
+std::vector<double> split_line(const std::string& line) {
+    std::vector<double> column;
     std::istringstream stream(line);
     std::string token;
 
     while (stream >> token) {  // 空白をスキップしてトークンを取得
         try {
-            column.push_back(std::stof(token));  // トークンをfloatに変換
+            column.push_back(std::stof(token));  // トークンをdoubleに変換
         }
         catch (const std::invalid_argument& e) {
-            std::cerr << "Invalid argument: " << token << " cannot be converted to float." << std::endl;
+            std::cerr << "Invalid argument: " << token << " cannot be converted to double." << std::endl;
         }
         catch (const std::out_of_range& e) {
-            std::cerr << "Out of range: " << token << " is out of range for float." << std::endl;
+            std::cerr << "Out of range: " << token << " is out of range for double." << std::endl;
         }
     }
 
     return column;
 }
+
 int main() {
 
     int counter = 0;
@@ -95,35 +97,44 @@ int main() {
     constexpr double emin_photon = 0.001;
 
     //all plot[0], one plot[eventnumber], no plot[-1]
-    constexpr float event_number = -1;
-    //read input.json and create values for it
-    //boost::property_tree::ptree pt;
-   // boost::property_tree::read_json("input.json", pt);
-    //const auto output = pt.get<std::string>("output");
-    std::string path = "dumpall.dat";
-
+    constexpr double event_number = -1;
+   
+    std::string DatPath = "dumpall.dat";
+    std::string output_file = "output_cpp.json";
+#if 0
+    if (std::filesystem::exists("input.json"))
+    {
+        boost::property_tree::ptree pt;
+        boost::property_tree::read_json("input.json", pt);
+        auto output = pt.get<std::string>("output");
+        DatPath = "G:/tagawa/phits/trace/output_8/" + output + "/dumpall.dat";
+    }
+    else
+    {
+        std::cout << "Can't find input.json\n";
+        return 1;
+    }
+#endif
     //各イベントの情報をhistoryに代入し、適宜batchに入力する。最終結果はbatchに入る。
     std::map<int, EventInfo> history;
     std::map<int, std::map<int, EventInfo>> batch;
 
     //計算に使われる変数
-    float ncol = 1;
-    std::vector<float> xyz= {0,0,0};
-    std::vector<float> cxyz = {0,0,0};
-    float cnt = 0;
-    float num = 0;
-    float nocas = 0;
-    float no = 0;
-    std::vector<float> reg(2);
-    std::vector<float> name;
-    float benergy, cenergy, ityp, nclsts, jcoll, energy_new, ncl, energy, energy_dps;
+    double ncol = 1;
+    std::vector<double> xyz= {0,0,0};
+    std::vector<double> cxyz = {0,0,0};
+    double cnt = 0;
+    double num = 0;
+    double nocas = 0;
+    double no = 0;
+    std::vector<double> reg(2);
+    std::vector<double> name;
+    double benergy, cenergy, ityp, nclsts, jcoll, energy_new, ncl, energy, energy_dps;
 
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(DatPath, std::ios::binary);
 
     if (!file.is_open()) {
-        std::cerr << "Failed to open file: " << path << std::endl;
-        int some;
-        std::cin >> some;
+        std::cerr << "Failed to open file: " << DatPath << std::endl;
         return 1;
     }
 
@@ -132,7 +143,7 @@ int main() {
     std::string line;
     while (std::getline(file, line)) //ファイルの各行ごとに実行
     {
-        std::vector<float> column=split_line(line);
+        std::vector<double> column=split_line(line);
         
         if (static_cast<int>(ncol) == 1)
         {
@@ -296,26 +307,26 @@ int main() {
 
     std::cout<<"Finished\nWriting output.json...\n";
 
-    // 出力ファイルのパス
-    std::string output_file = "output.json";
-
-    // 出力ディレクトリを作成
-    std::filesystem::path output_path(output_file);
-    //std::filesystem::create_directory(output_path.parent_path());
-
     try {
-        // boost::property_tree::ptreeにデータを変換
-        boost::property_tree::ptree pt_batch;
-        for (const auto& outer_pair : batch) {
-            boost::property_tree::ptree pt_inner;
+        nlohmann::ordered_json JsonObj;
 
+        for (const auto& outer_pair : batch) {
             for (const auto& inner_pair : outer_pair.second) {
-                pt_inner.add_child(std::to_string(inner_pair.first), to_ptree(inner_pair.second));
+                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["ityp"] = inner_pair.second.ityp;
+                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["x"] = inner_pair.second.x;
+                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["y"] = inner_pair.second.y;
+                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["z"] = inner_pair.second.z;
+                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["E"] = inner_pair.second.E;
+                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["x_deposit"] = inner_pair.second.x_deposit;
+                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["y_deposit"] = inner_pair.second.y_deposit;
+                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["z_deposit"] = inner_pair.second.z_deposit;
+                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["E_deposit"] = inner_pair.second.E_deposit;
             }
-            pt_batch.add_child(std::to_string(outer_pair.first), pt_inner);
         }
-        // JSONファイルに書き込み
-        boost::property_tree::write_json(output_file, pt_batch);
+
+        std::ofstream OutputStream(output_file);
+        OutputStream << std::setw(4) << JsonObj<< std::endl;
+        OutputStream.close();
 
         std::cout << "Completed!\n";
 
