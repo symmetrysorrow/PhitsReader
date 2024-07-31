@@ -5,10 +5,11 @@
 #include <string>
 #include <map>
 #include <filesystem>
+#include <sstream>
 #include <unordered_set>
 #include <nlohmann/json.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
+
+#define Python
 
 //intと粒子の種類の対応
 std::map<int, std::string> itype = {
@@ -41,32 +42,6 @@ struct EventInfo {
     std::vector<double> E_deposit;
 };
 
-// Vectorをptreeに変換するヘルパー関数
-boost::property_tree::ptree to_ptree(const std::vector<double>& vec) {
-    boost::property_tree::ptree pt;
-    for (const auto& elem : vec) 
-    {
-        boost::property_tree::ptree item;
-        item.put("", elem);
-        pt.push_back(std::make_pair("", item));
-    }
-    return pt;
-}
-
-// EventInfoをptreeに変換する関数
-boost::property_tree::ptree to_ptree(const EventInfo& event) {
-    boost::property_tree::ptree pt;
-    pt.put("ityp", event.ityp);
-    pt.add_child("x", to_ptree(event.x));
-    pt.add_child("y", to_ptree(event.y));
-    pt.add_child("z", to_ptree(event.z));
-    pt.add_child("E", to_ptree(event.E));
-    pt.add_child("x_deposit", to_ptree(event.x_deposit));
-    pt.add_child("y_deposit", to_ptree(event.y_deposit));
-    pt.add_child("z_deposit", to_ptree(event.z_deposit));
-    pt.add_child("E_deposit", to_ptree(event.E_deposit));
-    return pt;
-}
 //空白で文章を分割する関数
 std::vector<double> split_line(const std::string& line) {
     std::vector<double> column;
@@ -88,33 +63,22 @@ std::vector<double> split_line(const std::string& line) {
     return column;
 }
 
-int main() {
+#ifdef Python
+extern "C" __declspec(dllexport) void MakeOutput(const char* DatPath) {
 
-    int counter = 0;
+    std::string path(DatPath);
+#else
+void main(){
+    std::string path = "dumpall.dat";
+#endif
 
     //定数パラメーター
     constexpr double emin_electron = 0.1;
     constexpr double emin_photon = 0.001;
 
     //all plot[0], one plot[eventnumber], no plot[-1]
-    constexpr double event_number = -1;
-   
-    std::string DatPath = "dumpall.dat";
-    std::string output_file = "output_cpp.json";
-#if 0
-    if (std::filesystem::exists("input.json"))
-    {
-        boost::property_tree::ptree pt;
-        boost::property_tree::read_json("input.json", pt);
-        auto output = pt.get<std::string>("output");
-        DatPath = "G:/tagawa/phits/trace/output_8/" + output + "/dumpall.dat";
-    }
-    else
-    {
-        std::cout << "Can't find input.json\n";
-        return 1;
-    }
-#endif
+    constexpr float event_number = -1;
+
     //各イベントの情報をhistoryに代入し、適宜batchに入力する。最終結果はbatchに入る。
     std::map<int, EventInfo> history;
     std::map<int, std::map<int, EventInfo>> batch;
@@ -134,8 +98,8 @@ int main() {
     std::ifstream file(DatPath, std::ios::binary);
 
     if (!file.is_open()) {
-        std::cerr << "Failed to open file: " << DatPath << std::endl;
-        return 1;
+        std::cerr << "Failed to open file: " << path << std::endl;
+        return;
     }
 
     std::cout << "Processing file...\n";
@@ -308,36 +272,32 @@ int main() {
     std::cout<<"Finished\nWriting output.json...\n";
 
     try {
-        nlohmann::ordered_json JsonObj;
+        nlohmann::ordered_json json_obj;
 
         for (const auto& outer_pair : batch) {
             for (const auto& inner_pair : outer_pair.second) {
-                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["ityp"] = inner_pair.second.ityp;
-                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["x"] = inner_pair.second.x;
-                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["y"] = inner_pair.second.y;
-                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["z"] = inner_pair.second.z;
-                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["E"] = inner_pair.second.E;
-                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["x_deposit"] = inner_pair.second.x_deposit;
-                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["y_deposit"] = inner_pair.second.y_deposit;
-                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["z_deposit"] = inner_pair.second.z_deposit;
-                JsonObj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["E_deposit"] = inner_pair.second.E_deposit;
+                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["ityp"] = inner_pair.second.ityp;
+                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["x"] = inner_pair.second.x;
+                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["y"] = inner_pair.second.y;
+                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["z"] = inner_pair.second.z;
+                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["E"] = inner_pair.second.E;
+                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["x_deposit"] = inner_pair.second.x_deposit;
+                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["y_deposit"] = inner_pair.second.y_deposit;
+                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["z_deposit"] = inner_pair.second.z_deposit;
+                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["E_deposit"] = inner_pair.second.E_deposit;
             }
         }
 
-        std::ofstream OutputStream(output_file);
-        OutputStream << std::setw(4) << JsonObj<< std::endl;
-        OutputStream.close();
+        std::ofstream output_stream(output_file);
+        output_stream << std::setw(4) << json_obj;
+        output_stream.close();
 
         std::cout << "Completed!\n";
-
-        int some;
-        std::cin >> some;
-
     }
     catch (const std::exception& e) {
         std::cerr << "Error writing to JSON file: " << e.what() << std::endl;
-        return 1;
+        return;
     }
 
-    return 0;
+    return;
 }
