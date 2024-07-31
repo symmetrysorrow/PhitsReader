@@ -8,70 +8,45 @@
 #include <sstream>
 #include <unordered_set>
 #include <nlohmann/json.hpp>
+#include"SubFuncs.hpp"
+#include <Eigen/Dense>
+//#define Python
 
-#define Python
 
-//intと粒子の種類の対応
-std::map<int, std::string> itype = {
-    {12, "electron"},
-    {13, "positron"},
-    {14, "photon"}
-};
-//数字を受け取り対応する粒子を返す関数
-inline std::string GetItype(const double& ityp) {
-    auto it = itype.find(static_cast<int>(ityp));
-    if (it != itype.end())
-    {
-        return it->second;
-    }
-    else 
-    {
-        return "unknown";  // デフォルト値を返す
-    }
-};
-//Eventに関する構造体
-struct EventInfo {
-    int ityp;
-    std::vector<double> x;
-    std::vector<double> y;
-    std::vector<double> z;
-    std::vector<double> E;
-    std::vector<double> x_deposit;
-    std::vector<double> y_deposit;
-    std::vector<double> z_deposit;
-    std::vector<double> E_deposit;
-};
-
-//空白で文章を分割する関数
-std::vector<double> split_line(const std::string& line) {
-    std::vector<double> column;
-    std::istringstream stream(line);
-    std::string token;
-
-    while (stream >> token) {  // 空白をスキップしてトークンを取得
-        try {
-            column.push_back(std::stof(token));  // トークンをdoubleに変換
-        }
-        catch (const std::invalid_argument& e) {
-            std::cerr << "Invalid argument: " << token << " cannot be converted to double." << std::endl;
-        }
-        catch (const std::out_of_range& e) {
-            std::cerr << "Out of range: " << token << " is out of range for double." << std::endl;
-        }
-    }
-
-    return column;
-}
 
 #ifdef Python
-extern "C" __declspec(dllexport) void MakeOutput(const char* DatPath) {
+extern "C" __declspec(dllexport) void MakeOutput(const char* DataPath_char, const char* InputPath_char) {
 
-    std::string path(DatPath);
+    std::string DataPath(DataPath_char);
+    std::string InputPath(InputPath_char);
 #else
 void main(){
-    std::string path = "dumpall.dat";
+    std::string DataPath = "F:/hata/output_5";
+    std::string InputPath="./input.json";
 #endif
 
+    //jsonの読み込み
+    std::ifstream InputStream(InputPath);
+    
+
+    if (!InputStream.is_open()) {
+        std::cerr << "ファイルを開くことができません: " << InputPath << std::endl;
+
+    }
+
+    nlohmann::json InputJson;
+    try {
+        InputJson = nlohmann::json::parse(InputStream);
+    }
+    catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "JSONの解析中にエラーが発生しました: " << e.what() << std::endl;
+
+    }
+
+    std::string Output= InputJson["output"];
+
+    DataPath += ("/"+Output);
+    
     //定数パラメーター
     constexpr double emin_electron = 0.1;
     constexpr double emin_photon = 0.001;
@@ -95,17 +70,17 @@ void main(){
     std::vector<double> name;
     double benergy, cenergy, ityp, nclsts, jcoll, energy_new, ncl, energy, energy_dps;
 
-    std::ifstream file(DatPath, std::ios::binary);
+    std::ifstream DumpFile(DataPath+"/dumpall.dat", std::ios::binary);
 
-    if (!file.is_open()) {
-        std::cerr << "Failed to open file: " << path << std::endl;
+    if (!DumpFile.is_open()) {
+        std::cerr << "Failed to open file: " << DataPath << std::endl;
         return;
     }
 
     std::cout << "Processing file...\n";
-        
+
     std::string line;
-    while (std::getline(file, line)) //ファイルの各行ごとに実行
+    while (std::getline(DumpFile, line)) //ファイルの各行ごとに実行
     {
         std::vector<double> column=split_line(line);
         
@@ -228,10 +203,9 @@ void main(){
             if (static_cast<int>(cnt) == 5) { energy = column[1]; }
             if (static_cast<int>(cnt) == 8)
             {
-                int iityp = static_cast<int>(ityp);
-                if (iityp == 14 || iityp == 12 || iityp == 13)
+	            if (int iityp = static_cast<int>(ityp); iityp == 14 || iityp == 12 || iityp == 13)
                 {
-                    if ((energy >= emin_electron && iityp == 12) || (energy >= emin_photon && iityp == 14) || (energy >= emin_electron && iityp == 13))
+                    if ((energy < emin_electron && iityp == 12) || (energy >= emin_photon && iityp == 14) || (energy >= emin_electron && iityp == 13))
                     {
                         energy_new += energy;
                     }
@@ -263,41 +237,59 @@ void main(){
         num++;
     }
     //history,nameに使われているメモリを解放
-    file.close();
+    DumpFile.close();
     history.clear();
     std::map<int, EventInfo>(history).swap(history);
     name.clear();
     name.shrink_to_fit();
 
-    std::cout<<"Finished\nWriting output.json...\n";
+    std::cout<<"Finished\n";
 
-    try {
-        nlohmann::ordered_json json_obj;
+    // 出力ディレクトリを作成
+    std::filesystem::create_directories(DataPath+"/PulseCPP/Ch0");
+    std::filesystem::create_directories(DataPath+"/PulseCPP/CH1");
 
-        for (const auto& outer_pair : batch) {
-            for (const auto& inner_pair : outer_pair.second) {
-                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["ityp"] = inner_pair.second.ityp;
-                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["x"] = inner_pair.second.x;
-                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["y"] = inner_pair.second.y;
-                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["z"] = inner_pair.second.z;
-                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["E"] = inner_pair.second.E;
-                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["x_deposit"] = inner_pair.second.x_deposit;
-                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["y_deposit"] = inner_pair.second.y_deposit;
-                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["z_deposit"] = inner_pair.second.z_deposit;
-                json_obj[std::to_string(outer_pair.first)][std::to_string(inner_pair.first)]["E_deposit"] = inner_pair.second.E_deposit;
+	nlohmann::ordered_json json_obj;
+
+    int n_abs = InputJson["n_abs"];
+        
+    const std::vector<double> Block = linspace(-1, 1, n_abs+1);
+
+    for(const auto& b:Block)
+    {
+        std::cout << b << " / ";
+    }
+    int Counter = 0;
+    for (const auto& outer_pair : batch) {
+        Counter++;
+        std::vector<double> BlockDeposit(n_abs, 0.0);
+        std::vector<double> Position;
+
+        for (const auto& inner_pair : outer_pair.second) {
+            for(size_t i=0;i< inner_pair.second.E_deposit.size();i++)
+            {
+                int Pixel = InBlock(Block, inner_pair.second.x_deposit[i], inner_pair.second.y_deposit[i], inner_pair.second.z_deposit[i]);
+                BlockDeposit[Pixel - 1] += inner_pair.second.E_deposit[i];
+                std::cout << "Event:" << outer_pair.first << "\n";
+                std::cout << "No:" << inner_pair.first << "\n";
+                std::cout << "Pixel:" << Pixel << "\n";
             }
+
+            if (Counter == 3)
+            {
+                std::cin >> Counter;
+            }
+
+            for(auto& block_deposit:BlockDeposit)
+            {
+                block_deposit = block_deposit * 1e6;
+            }
+
+
         }
-
-        std::ofstream output_stream(output_file);
-        output_stream << std::setw(4) << json_obj;
-        output_stream.close();
-
-        std::cout << "Completed!\n";
     }
-    catch (const std::exception& e) {
-        std::cerr << "Error writing to JSON file: " << e.what() << std::endl;
-        return;
-    }
+
+	std::cout << "Completed!\n";
 
     return;
 }
