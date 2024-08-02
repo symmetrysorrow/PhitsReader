@@ -40,12 +40,40 @@ void main(){
     }
     catch (const nlohmann::json::parse_error& e) {
         std::cerr << "JSONの解析中にエラーが発生しました: " << e.what() << std::endl;
-
     }
 
-    std::string Output= InputJson["output"];
+    InputParameters InputPara;
 
-    DataPath += ("/"+Output);
+    InputPara.C_abs = InputJson["C_abs"];
+    InputPara.C_tes = InputJson["C_tes"];
+
+    InputPara.G_abs_abs = InputJson["G_abs-abs"];
+
+    InputPara.G_abs_tes = InputJson["G_abs-tes"];
+    InputPara.G_tes_bath = InputJson["G_tes-bath"];
+    InputPara.R = InputJson["R"];
+
+    InputPara.R_l = InputJson["R_l"];
+    InputPara.T_c = InputJson["T_c"];
+    InputPara.T_bath = InputJson["T_bath"];
+    InputPara.alpha = InputJson["alpha"];
+    InputPara.beta = InputJson["beta"];
+
+    InputPara.L = InputJson["L"];
+    InputPara.n = InputJson["n"];
+    InputPara.E = InputJson["E"];
+
+    InputPara.length = InputJson["length"];
+    InputPara.n_abs = InputJson["n_abs"];
+    InputPara.rate = InputJson["rate"];
+
+    InputPara.samples = InputJson["samples"];
+    InputPara.data_samples = InputJson["data_samples"];
+    InputPara.cutoff = InputJson["cutoff"];
+    InputPara.history = InputJson["history"];
+    InputPara.output = InputJson["output"];
+
+    DataPath += ("/"+InputPara.output);
     
     //定数パラメーター
     constexpr double emin_electron = 0.1;
@@ -243,7 +271,7 @@ void main(){
     name.clear();
     name.shrink_to_fit();
 
-    std::cout<<"Finished\n";
+    std::cout<<"Finished\nConverting to Pulse\n";
 
     // 出力ディレクトリを作成
     std::filesystem::create_directories(DataPath+"/PulseCPP/Ch0");
@@ -255,38 +283,61 @@ void main(){
         
     const std::vector<double> Block = linspace(-1, 1, n_abs+1);
 
-    for(const auto& b:Block)
-    {
-        std::cout << b << " / ";
-    }
     int Counter = 0;
+    int sum = batch.size();
     for (const auto& outer_pair : batch) {
-        Counter++;
-        std::vector<double> BlockDeposit(n_abs, 0.0);
-        std::vector<double> Position;
+        {
+            float progress = Counter == sum ? 100 : static_cast<float>(Counter) / sum * 100;
+            std::cout << "\rProgress:" << std::fixed << std::setprecision(2) << progress << "%";
+            std::cout.flush();
+            Counter++;
+        }
 
+        std::vector<double> BlockDeposit(n_abs, 0.0);
+        InputPara.positions.clear();
+        
         for (const auto& inner_pair : outer_pair.second) {
             for(size_t i=0;i< inner_pair.second.E_deposit.size();i++)
             {
                 int Pixel = InBlock(Block, inner_pair.second.x_deposit[i], inner_pair.second.y_deposit[i], inner_pair.second.z_deposit[i]);
                 BlockDeposit[Pixel - 1] += inner_pair.second.E_deposit[i];
-                std::cout << "Event:" << outer_pair.first << "\n";
-                std::cout << "No:" << inner_pair.first << "\n";
-                std::cout << "Pixel:" << Pixel << "\n";
-            }
-
-            if (Counter == 3)
-            {
-                std::cin >> Counter;
             }
 
             for(auto& block_deposit:BlockDeposit)
             {
-                block_deposit = block_deposit * 1e6;
+                InputPara.positions.push_back(block_deposit * 1e6) ;
             }
-
-
         }
+        Eigen::MatrixXd pulse_total_0;
+        Eigen::MatrixXd pulse_total_1;
+        std::cout << "Before Model\n";
+        Model(InputPara, pulse_total_0, pulse_total_1);
+        std::cout << "AfterModel\n";
+        Eigen::VectorXd pulse_0 = pulse_total_0.rowwise().sum();
+        Eigen::VectorXd pulse_1 = pulse_total_0.rowwise().sum();
+
+        std::string ChFile_0 = DataPath + "/PulseCPP/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
+        std::ofstream outFile_0(ChFile_0);
+        if (!outFile_0) {
+            std::cerr << "ファイルを開けませんでした。" << std::endl;
+            return;
+        }
+        for (int i = 0; i < pulse_0.size(); ++i) {
+            outFile_0 << pulse_0(i) << std::endl;
+        }
+        outFile_0.close();
+
+        std::string ChFile_1 = DataPath + "/PulseCPP/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
+        std::ofstream outFile_1(ChFile_0);
+        if (!outFile_1) {
+            std::cerr << "ファイルを開けませんでした。" << std::endl;
+            return;
+        }
+        for (int i = 0; i < pulse_0.size(); ++i) {
+            outFile_1 << pulse_1(i) << std::endl;
+        }
+        outFile_1.close();
+        Counter++;
     }
 
 	std::cout << "Completed!\n";

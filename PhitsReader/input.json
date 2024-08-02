@@ -12,7 +12,7 @@
     "beta": 1.6,
     "L": 1e-10,
     "n": 3.5,
-    "E": 1172,
+    "E": 1332,
     "length": 20,
     "n_abs": 101,
     "rate": 1000000.0,
@@ -20,6 +20,6 @@
     "position": [],
     "data_samples": 10000,
     "cutoff": 10000,
-    "history": 100000,
-    "output": "662keV_6"
+    "history": 1000000,
+    "output": "1332keV_51"
 }
