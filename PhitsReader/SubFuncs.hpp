@@ -2,6 +2,7 @@
 #include <cmath>
 #include<complex>
 //#EIGEN_USE_MKL_ALL
+#include <iostream>
 #include<Eigen/Dense>
 
 //intと粒子の種類の対応
@@ -217,32 +218,35 @@ void Model(const InputParameters& InputPara, Eigen::MatrixXd& I_t0, Eigen::Matri
     double I_t0_sum = 0;
     double I_t1_sum = 0;
     count = 0;
+    I_t0.resize(pixel.size(), time.size());
+    std::cout << "pixel:" << pixel.size() << "\ntime:" << time.size() << "\n";
     for(const int& pix:pixel)
     {
-        Eigen::MatrixXcd Matrix_t;
-
-        
+        Eigen::MatrixXcd Matrix_t(n_abs_4,time.size());
+        Matrix_t.setZero();
+        std::cout << "Model 4.1\n";
 	    for(int j=0;j<=n_abs_4;j++)
 	    {
             int counter = 0;
+            //std::cout << "result:" << arb[pix](j) * EigenVectors(0, j) * std::exp(EigenValues(j)*time[0]) << "\n";
+            std::cout << "result:" << arb[pix](j);
+            std::cout <<"Matrix:"<< Matrix_t(j, 0) << "\n";
+            std::cout << "counter:" << counter << "\n";
             for(const auto& ti:time)
             {
-                std::cout << "ti:" << ti << "\n";
-                std::cout << "EV:" << EigenValues(j) << "\n";
-                std::cout << EigenValues(j) * ti;
-                std::cin >> I_t0_sum;
+               //std::cout << "j:" << j << "\ncounter" << counter << "\n";
                 Matrix_t(j,counter) = arb[pix](j) * EigenVectors(0, j) * std::exp(EigenValues(j) * ti);
                 counter++;
             }
-            std::cout << "Model 4.3\n";
+            
 	    }
         std::cout << "Model 4.4\n";
-        Eigen::VectorXd ColSum = Matrix_t.colwise().sum().real();
+        I_t0.row(count) = Matrix_t.colwise().sum().real();
         count++;
-        I_t0.row(count) = ColSum;
     }
     std::cout << "Model5\n";
     count = 0;
+    I_t1.resize(pixel.size(), time.size());
     for (const int& pix : pixel)
     {
         Eigen::MatrixXcd Matrix_t;
