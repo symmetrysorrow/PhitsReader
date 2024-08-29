@@ -18,8 +18,11 @@
     <ClCompile Include="PhitsReader.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Batch2Pulse.cpp">
+    <ClCompile Include="Batch2Pulse.hpp">
       <Filter>ヘッダー ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Batch2Pulse.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

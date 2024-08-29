@@ -1,14 +1,13 @@
 ﻿#pragma once
 #include <iostream>
-#include <fstream>
+
 #include <vector>
 #include <string>
 #include <map>
-#include <filesystem>
-#include <sstream>
-#include <unordered_set>
+
 #include <nlohmann/json.hpp>
 
+#include "Batch2Pulse.hpp"
 #include"Dump2Batch.hpp"
 
 //#define Python
@@ -22,7 +21,7 @@ extern "C" __declspec(dllexport) void MakeOutput(const char* DataPath, const cha
     std::string InputPath(InputPath_char);
     std::string output_file(Output_FileName);
 #else
-void main(){
+int main(){
     std::string DataPath = "./";
     std::string InputPath = "./input.json";
     std::string output_file = "output.json";
@@ -43,7 +42,9 @@ void main(){
 
     WriteOutput(batch, output_file);
 
+    PulseParameters PulsePara(InputPara);
+
     std::cout << "Finished\n";
 
-    return;
+    return 0;
 }

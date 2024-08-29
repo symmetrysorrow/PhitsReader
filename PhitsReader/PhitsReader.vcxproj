@@ -136,6 +136,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Batch2Pulse.cpp" />
+    <ClCompile Include="Batch2Pulse.hpp" />
     <ClCompile Include="PhitsReader.cpp" />
   </ItemGroup>
   <ItemGroup>

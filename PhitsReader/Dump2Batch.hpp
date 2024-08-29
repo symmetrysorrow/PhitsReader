@@ -2,12 +2,15 @@
 #include <cmath>
 #include<complex>
 #include <iostream>
-#include<Eigen/Dense>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <unordered_set>
 #include <nlohmann/json.hpp>
 #include <iomanip>
 
-//intと粒子の種類の対応
-std::map<int, std::string> itype = {
+//intと粒子の種類の対応マップ
+inline std::map<int, std::string> itype = {
     {12, "electron"},
     {13, "positron"},
     {14, "photon"}
@@ -58,6 +61,7 @@ std::vector<double> split_line(const std::string& line) {
     return column;
 }
 
+//Input.jsonの各パラメータの構造体
 struct InputParameters
 {
     double C_abs;
@@ -85,6 +89,7 @@ struct InputParameters
     std::string output;
 };
 
+//Input.jsonを読み出す関数
 InputParameters ReadInputJson(const std::string& InputPath){
 
     InputParameters InputPara;
@@ -129,6 +134,7 @@ InputParameters ReadInputJson(const std::string& InputPath){
     return InputPara;
 }
 
+//dumpall.datをbatchにする関数
 std::map<int, std::map<int, EventInfo>> ReadDump(const std::string& DumpPath)
 {
     //定数パラメーター
@@ -327,6 +333,7 @@ std::map<int, std::map<int, EventInfo>> ReadDump(const std::string& DumpPath)
     return batch;
 }
 
+//batchをoutput.jsonに書き出す関数
 void WriteOutput(const std::map<int, std::map<int, EventInfo>>& batch, const std::string& output_file)
 {
     try {
@@ -355,20 +362,3 @@ void WriteOutput(const std::map<int, std::map<int, EventInfo>>& batch, const std
         return;
     }
 }
-
-std::vector<double> linspace(double start, double stop, int num) {
-    std::vector<double> values;
-    if (num <= 0) return values; // numが0以下の場合は空の配列を返す
-
-    // ステップ幅を計算
-    double step = (stop - start) / (num - 1);
-
-    // 値を生成
-    for (int i = 0; i < num; ++i) {
-        values.push_back(start + i * step);
-    }
-
-    return values;
-}
-
-
