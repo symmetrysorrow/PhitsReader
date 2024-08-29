@@ -135,10 +135,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Batch2Pulse.cpp" />
     <ClCompile Include="PhitsReader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SubFuncs.hpp" />
+    <ClInclude Include="Dump2Batch.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
