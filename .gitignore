@@ -362,3 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 PhitsReader/dumpall.dat
+PhitsReader/output.json
+PhitsReader/output-cpp.json
