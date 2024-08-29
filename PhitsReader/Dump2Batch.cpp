@@ -94,7 +94,7 @@ InputParameters ReadInputJson(const std::string& InputPath) {
 }
 
 // dumpall.datをbatchにする関数
-std::map<int, std::map<int, EventInfo>> ReadDump(const std::string& DumpPath) {
+void ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>>& batch) {
     // 定数パラメーター
     constexpr double emin_electron = 0.1;
     constexpr double emin_photon = 0.001;
@@ -104,7 +104,7 @@ std::map<int, std::map<int, EventInfo>> ReadDump(const std::string& DumpPath) {
 
     // 各イベントの情報をhistoryに代入し、適宜batchに入力する。最終結果はbatchに入る。
     std::map<int, EventInfo> history;
-    std::map<int, std::map<int, EventInfo>> batch;
+    //std::map<int, std::map<int, EventInfo>> batch;
 
     // 計算に使われる変数
     double ncol = 1;
@@ -122,7 +122,7 @@ std::map<int, std::map<int, EventInfo>> ReadDump(const std::string& DumpPath) {
 
     if (!file.is_open()) {
         std::cerr << "Failed to open dump file: " << DumpPath << std::endl;
-        return batch;
+        return;
     }
 
     std::string line;
@@ -287,9 +287,6 @@ std::map<int, std::map<int, EventInfo>> ReadDump(const std::string& DumpPath) {
     file.close();
     history.clear();
     std::map<int, EventInfo>(history).swap(history);
-
-
-    return batch;
 }
 
 // batchをoutput.jsonに書き出す関数
@@ -316,6 +313,7 @@ void WriteOutput(const std::map<int, std::map<int, EventInfo>>& batch, const std
         output_stream.close();
 
         std::cout << "Completed!\n";
+
     }
     catch (const std::exception& e) {
         std::cerr << "Error writing to JSON file: " << e.what() << std::endl;

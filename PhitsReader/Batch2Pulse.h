@@ -17,6 +17,7 @@ struct PulseParameters {
     const double L_I;
     const double t_I;
 
+
     PulseParameters(const InputParameters& InputPara);
 };
 

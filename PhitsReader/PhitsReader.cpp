@@ -10,8 +10,6 @@
 
 //#define Python
 
-
-
 #ifdef Python
 extern "C" __declspec(dllexport) void MakeOutput(const char* DataPath, const char* InputPath_char, const char* Output_FileName) {
 
@@ -29,12 +27,14 @@ int main(){
 #ifdef Python
     DataPath += ("/" + InputPara.output+"/");
 #endif
-    
+
+
     std::string DumpPath = DataPath + "dumpall.dat";
 
     std::cout << "Processing file...\n";
         
-    std::map<int, std::map<int, EventInfo>> batch = ReadDump(DumpPath);
+    std::map<int, std::map<int, EventInfo>> batch;
+	ReadDump(DumpPath, batch);
 
     std::cout<<"Finished\nWriting output.json...\n";
 

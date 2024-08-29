@@ -16,6 +16,7 @@ std::vector<double> linspace(double start, double stop, int num) {
     std::vector<double> values;
     if (num <= 0) return values;
 
+
     double step = (stop - start) / (num - 1);
 
     for (int i = 0; i < num; ++i) {
