@@ -1,46 +1,34 @@
 #pragma once
-#include <cmath>
-#include<complex>
-#include <iostream>
-#include <filesystem>
-#include <fstream>
+
+#include "Dump2Batch.h"
 #include <sstream>
 #include <unordered_set>
 #include <nlohmann/json.hpp>
 #include <iomanip>
+#include <fstream>
+#include <cmath>
+#include <complex>
+#include <iostream>
 
-//intと粒子の種類の対応マップ
-inline std::map<int, std::string> itype = {
+// intと粒子の種類の対応マップ
+std::map<int, std::string> itype = {
     {12, "electron"},
     {13, "positron"},
     {14, "photon"}
 };
-//数字を受け取り対応する粒子を返す関数
-inline std::string GetItype(const double& ityp) {
+
+// 数字を受け取り対応する粒子を返す関数
+std::string GetItype(const double& ityp) {
     auto it = itype.find(static_cast<int>(ityp));
-    if (it != itype.end())
-    {
+    if (it != itype.end()) {
         return it->second;
     }
-    else
-    {
+    else {
         return "unknown";  // デフォルト値を返す
     }
-};
-//Eventに関する構造体
-struct EventInfo {
-    int ityp;
-    std::vector<double> x;
-    std::vector<double> y;
-    std::vector<double> z;
-    std::vector<double> E;
-    std::vector<double> x_deposit;
-    std::vector<double> y_deposit;
-    std::vector<double> z_deposit;
-    std::vector<double> E_deposit;
-};
+}
 
-//空白で文章を分割する関数
+// 空白で文章を分割する関数
 std::vector<double> split_line(const std::string& line) {
     std::vector<double> column;
     std::istringstream stream(line);
@@ -61,39 +49,10 @@ std::vector<double> split_line(const std::string& line) {
     return column;
 }
 
-//Input.jsonの各パラメータの構造体
-struct InputParameters
-{
-    double C_abs;
-    double C_tes;
-    double G_abs_abs;
-    double G_abs_tes;
-    double G_tes_bath;
-    double R;
-    double R_l;
-    double T_c;
-    double T_bath;
-    double alpha;
-    double beta;
-    double L;
-    double n;
-    double E;
-    double length;
-    int n_abs;
-    double rate;
-    double samples;
-    std::vector<double> positions;
-    int data_samples;
-    int cutoff;
-    int history;
-    std::string output;
-};
-
-//Input.jsonを読み出す関数
-InputParameters ReadInputJson(const std::string& InputPath){
-
+// Input.jsonを読み出す関数
+InputParameters ReadInputJson(const std::string& InputPath) {
     InputParameters InputPara;
-    //jsonの読み込み
+    // jsonの読み込み
     std::ifstream InputStream(InputPath);
 
     if (!InputStream.is_open()) {
@@ -134,21 +93,20 @@ InputParameters ReadInputJson(const std::string& InputPath){
     return InputPara;
 }
 
-//dumpall.datをbatchにする関数
-std::map<int, std::map<int, EventInfo>> ReadDump(const std::string& DumpPath)
-{
-    //定数パラメーター
+// dumpall.datをbatchにする関数
+std::map<int, std::map<int, EventInfo>> ReadDump(const std::string& DumpPath) {
+    // 定数パラメーター
     constexpr double emin_electron = 0.1;
     constexpr double emin_photon = 0.001;
 
-    //all plot[0], one plot[eventnumber], no plot[-1]
+    // all plot[0], one plot[eventnumber], no plot[-1]
     constexpr float event_number = -1;
 
-    //各イベントの情報をhistoryに代入し、適宜batchに入力する。最終結果はbatchに入る。
+    // 各イベントの情報をhistoryに代入し、適宜batchに入力する。最終結果はbatchに入る。
     std::map<int, EventInfo> history;
     std::map<int, std::map<int, EventInfo>> batch;
 
-    //計算に使われる変数
+    // 計算に使われる変数
     double ncol = 1;
     std::vector<double> xyz = { 0,0,0 };
     std::vector<double> cxyz = { 0,0,0 };
@@ -325,17 +283,17 @@ std::map<int, std::map<int, EventInfo>> ReadDump(const std::string& DumpPath)
         cnt++;
         num++;
     }
-
+    //historyに使われているメモリを解放
     file.close();
     history.clear();
     std::map<int, EventInfo>(history).swap(history);
 
+
     return batch;
 }
 
-//batchをoutput.jsonに書き出す関数
-void WriteOutput(const std::map<int, std::map<int, EventInfo>>& batch, const std::string& output_file)
-{
+// batchをoutput.jsonに書き出す関数
+void WriteOutput(const std::map<int, std::map<int, EventInfo>>& batch, const std::string& output_file) {
     try {
         nlohmann::ordered_json json_obj;
 
@@ -356,6 +314,8 @@ void WriteOutput(const std::map<int, std::map<int, EventInfo>>& batch, const std
         std::ofstream output_stream(output_file);
         output_stream << std::setw(4) << json_obj;
         output_stream.close();
+
+        std::cout << "Completed!\n";
     }
     catch (const std::exception& e) {
         std::cerr << "Error writing to JSON file: " << e.what() << std::endl;

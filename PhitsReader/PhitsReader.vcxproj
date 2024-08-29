@@ -136,11 +136,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Batch2Pulse.cpp" />
-    <ClCompile Include="Batch2Pulse.hpp" />
+    <ClCompile Include="Batch2Pulse.h" />
+    <ClCompile Include="Dump2Batch.cpp" />
     <ClCompile Include="PhitsReader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Dump2Batch.hpp" />
+    <ClCompile Include="Dump2Batch.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

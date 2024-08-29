@@ -4,11 +4,9 @@
 #include <vector>
 #include <string>
 #include <map>
-
 #include <nlohmann/json.hpp>
-
-#include "Batch2Pulse.hpp"
-#include"Dump2Batch.hpp"
+#include "Batch2Pulse.h"
+#include"Dump2Batch.h"
 
 //#define Python
 
