@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <iostream>
-
+#include <fstream>
 #include <vector>
 #include <string>
 #include <map>
@@ -43,6 +43,26 @@ int main(){
     PulseParameters PulsePara(InputPara);
 
     std::cout << "Finished\n";
+
+    Eigen::MatrixXd Matrix_M=MakeMatrix_M(PulsePara, InputPara);
+
+    Eigen::EigenSolver<Eigen::MatrixXd> eigensolver(Matrix_M);
+    // 固有値
+    Eigen::VectorXcd EigenValues = eigensolver.eigenvalues();
+    // 固有ベクトル
+    Eigen::MatrixXcd EigenVectors = eigensolver.eigenvectors();
+
+    // ファイルへの書き出し
+    std::ofstream file("eigenvalues.txt");
+    if (file.is_open()) {
+        for (int i = 0; i < EigenValues.size(); ++i) {
+            file << EigenValues(i).real() << "\n";
+        }
+        file.close();
+    }
+    else {
+        std::cerr << "Unable to open file for writing.\n";
+    }
 
     return 0;
 }

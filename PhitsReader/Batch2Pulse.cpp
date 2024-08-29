@@ -37,3 +37,61 @@ int InBlock(const std::vector<double>& Block, const double& x_deposit, const dou
     }
     return 0;
 }
+
+Eigen::MatrixXd MakeMatrix_M(const PulseParameters& PulsePara, const InputParameters& InputPara)
+{
+    int n_abs = InputPara.n_abs;
+	const int n_abs_1 = n_abs + 1;
+	const int n_abs_2 = n_abs + 2;
+	const int n_abs_3 = n_abs + 3;
+	const int n_abs_4 = n_abs + 4;
+
+
+	Eigen::MatrixXd Matrix_M(n_abs_4, n_abs_4);
+	Matrix_M = Eigen::MatrixXd::Zero(n_abs_4, n_abs_4);
+
+	for (int i = 0; i < n_abs_4; i++)
+	{
+		for (int j = 0; j < n_abs_4; j++)
+		{
+			if (j == i - 1)
+			{
+				Matrix_M(i, j) = -PulsePara.G_abs_abs / PulsePara.C_abs;
+			}
+			if (j == i)
+			{
+				Matrix_M(i, j) = 2 * PulsePara.G_abs_abs / PulsePara.C_abs;
+			}
+			if (j == i + 1)
+			{
+				Matrix_M(i, j) = -PulsePara.G_abs_abs / PulsePara.C_abs;
+			}
+		}
+	}
+
+	Matrix_M(0, 0) = 1 / PulsePara.t_el;
+	Matrix_M(0, 1) = PulsePara.L_I * InputPara.G_tes_bath / (PulsePara.I * InputPara.L);
+
+	Matrix_M(1, 0) = -PulsePara.I * InputPara.R * (2 + InputPara.beta) / InputPara.C_tes;
+	Matrix_M(1, 1) = 1 / PulsePara.t_I + (InputPara.G_abs_tes / InputPara.C_tes);
+	Matrix_M(1, 2) = -InputPara.G_abs_tes / InputPara.C_tes;
+
+	Matrix_M(2, 1) = -InputPara.G_abs_tes / PulsePara.C_abs;
+	Matrix_M(2, 2) = InputPara.G_abs_tes / PulsePara.C_abs + PulsePara.G_abs_abs / PulsePara.C_abs;
+	Matrix_M(2, 3) = -PulsePara.G_abs_abs / PulsePara.C_abs;
+
+	Matrix_M(n_abs_1, n_abs) = -PulsePara.G_abs_abs / PulsePara.C_abs;
+	Matrix_M(n_abs_1, n_abs_1) = InputPara.G_abs_tes / PulsePara.C_abs + PulsePara.G_abs_abs / PulsePara.C_abs;
+	Matrix_M(n_abs_1, n_abs_2) = -InputPara.G_abs_tes / PulsePara.C_abs;
+
+	Matrix_M(n_abs_2, n_abs_1) = -InputPara.G_abs_tes / InputPara.C_tes;
+	Matrix_M(n_abs_2, n_abs_2) = 1 / PulsePara.t_I + InputPara.G_abs_tes / InputPara.C_tes;
+	Matrix_M(n_abs_2, n_abs_3) = -PulsePara.I * InputPara.R * (2 + InputPara.beta) / InputPara.C_tes;
+
+	Matrix_M(n_abs_3, n_abs_2) = PulsePara.L_I * InputPara.G_tes_bath / (PulsePara.I * InputPara.L);
+	Matrix_M(n_abs_3, n_abs_3) = 1 / PulsePara.t_el;
+
+	Matrix_M *= -1;
+
+	return Matrix_M;
+}

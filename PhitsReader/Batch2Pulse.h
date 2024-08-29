@@ -2,6 +2,8 @@
 #include <vector>
 #include <Eigen/Dense>
 
+#include "Dump2Batch.h"
+
 struct InputParameters;
 
 // パルスに関する構造体
@@ -26,3 +28,5 @@ std::vector<double> linspace(double start, double stop, int num);
 
 // なぞ関数1
 int InBlock(const std::vector<double>& Block, const double& x_deposit, const double& y_deposit, const double& z_deposit);
+
+Eigen::MatrixXd MakeMatrix_M(const PulseParameters& PulsePara, const InputParameters& InputPara);
