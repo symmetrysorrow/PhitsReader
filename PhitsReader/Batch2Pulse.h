@@ -30,3 +30,5 @@ std::vector<double> linspace(double start, double stop, int num);
 int InBlock(const std::vector<double>& Block, const double& x_deposit, const double& y_deposit, const double& z_deposit);
 
 Eigen::MatrixXd MakeMatrix_M(const PulseParameters& PulsePara, const InputParameters& InputPara);
+
+Eigen::MatrixXd MakeMatrix_X(const PulseParameters& PulsePara, const InputParameters& InputPara, const std::vector<int>& pixel);

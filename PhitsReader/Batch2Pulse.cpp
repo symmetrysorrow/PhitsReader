@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Batch2Pulse.h"
+#include<filesystem>
+#include <iostream>
+
 #include"Dump2Batch.h"
 
 PulseParameters::PulseParameters(const InputParameters& InputPara)
@@ -40,7 +43,7 @@ int InBlock(const std::vector<double>& Block, const double& x_deposit, const dou
 
 Eigen::MatrixXd MakeMatrix_M(const PulseParameters& PulsePara, const InputParameters& InputPara)
 {
-    int n_abs = InputPara.n_abs;
+    const int n_abs = InputPara.n_abs;
 	const int n_abs_1 = n_abs + 1;
 	const int n_abs_2 = n_abs + 2;
 	const int n_abs_3 = n_abs + 3;
@@ -94,4 +97,31 @@ Eigen::MatrixXd MakeMatrix_M(const PulseParameters& PulsePara, const InputParame
 	Matrix_M *= -1;
 
 	return Matrix_M;
+}
+
+Eigen::MatrixXd MakeMatrix_X(const PulseParameters& PulsePara, const InputParameters& InputPara, const std::vector<int>& pixel)
+{
+	const int n_abs = InputPara.n_abs;
+	const int n_abs_1 = n_abs + 1;
+	const int n_abs_2 = n_abs + 2;
+	const int n_abs_3 = n_abs + 3;
+	const int n_abs_4 = n_abs + 4;
+
+	Eigen::MatrixXd Matrix_X(n_abs_2, n_abs_4);
+	Matrix_X = Eigen::MatrixXd::Zero(n_abs_2, n_abs_4);
+
+	const double Same = InputPara.E * 1e3 * PulsePara.e_const / InputPara.C_tes;
+
+	for (const int& pix : pixel)
+	{
+		if (pix <= n_abs_2)
+		{
+			Matrix_X(pix, pix + 1) = InputPara.positions[pix - 1] * PulsePara.e_const / PulsePara.C_abs;
+		}
+	}
+
+	Matrix_X(0, 1) = Same;
+	Matrix_X(n_abs_1, n_abs_2) = Same;
+
+	return Matrix_X;
 }
