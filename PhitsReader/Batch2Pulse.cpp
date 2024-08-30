@@ -3,6 +3,7 @@
 #include "Batch2Pulse.h"
 #include<filesystem>
 #include <iostream>
+#include <numeric>
 
 #include"Dump2Batch.h"
 
@@ -124,4 +125,44 @@ Eigen::MatrixXd MakeMatrix_X(const PulseParameters& PulsePara, const InputParame
 	Matrix_X(n_abs_1, n_abs_2) = Same;
 
 	return Matrix_X;
+}
+
+bool compareByMagnitude(int i, int j, const Eigen::VectorXcd& eigenvalues)
+{
+	return std::abs(eigenvalues(i)) < std::abs(eigenvalues(j));
+}
+
+void SortEigen(Eigen::VectorXcd& EigenValues, Eigen::MatrixXcd& EigenVectors)
+{
+	std::vector<int> indices(EigenValues.size());
+	std::iota(indices.begin(), indices.end(), 0);
+
+	std::sort(indices.begin(), indices.end(),
+		[&EigenValues](int i, int j) { return compareByMagnitude(i, j, EigenValues); });
+
+	// ソートされた固有値と固有ベクトルを作成
+	Eigen::VectorXcd sorted_eigenvalues(EigenValues.size());
+	Eigen::MatrixXcd sorted_eigenvectors(EigenVectors.rows(), EigenVectors.cols());
+
+	for (int i = 0; i < indices.size(); ++i) {
+		sorted_eigenvalues(i) = EigenValues(indices[i]);
+		sorted_eigenvectors.col(i) = EigenVectors.col(indices[i]);
+	}
+
+	EigenValues = sorted_eigenvalues;
+	EigenVectors = sorted_eigenvectors;
+
+	// 各列（固有ベクトル）を正規化
+	for (int i = 0; i < EigenVectors.cols(); ++i) {
+		EigenVectors.col(i).normalize();
+	}
+
+	// 固有ベクトルを調整し、最初の要素が正になるようにする
+    for (int i = 0; i < EigenVectors.cols(); ++i) {
+        if (EigenVectors(0, i).real() < 0) {
+			EigenVectors.col(i) = -EigenVectors.col(i); // ベクトル全体を反転
+        }
+    }
+
+	return;
 }

@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <nlohmann/json.hpp>
+#include <iomanip>
 #include "Batch2Pulse.h"
 #include"Dump2Batch.h"
 
@@ -50,11 +51,57 @@ int main(){
 
     Eigen::MatrixXd Matrix_M=MakeMatrix_M(PulsePara, InputPara);
 
-    Eigen::EigenSolver<Eigen::MatrixXd> eigensolver(Matrix_M);
-    // 固有値
-    Eigen::VectorXcd EigenValues = eigensolver.eigenvalues();
-    // 固有ベクトル
-    Eigen::MatrixXcd EigenVectors = eigensolver.eigenvectors();
+	Eigen::EigenSolver<Eigen::MatrixXd> eigensolver(Matrix_M);
+	// 固有値
+	Eigen::VectorXcd EigenValues = eigensolver.eigenvalues();
+	// 固有ベクトル
+	Eigen::MatrixXcd EigenVectors = eigensolver.eigenvectors();
+
+	SortEigen(EigenValues, EigenVectors);
+
+	std::ofstream file_m("vec.txt");
+
+	if (file_m.is_open()) {
+
+		file_m << std::scientific << std::setprecision(25) << EigenVectors.real() << std::endl;
+
+		file_m.close();
+	}
+
+	std::ofstream file_val("val.txt");
+
+	if (file_val.is_open()) {
+
+		file_val << std::scientific << std::setprecision(25) << EigenValues.real() << std::endl;
+
+		file_val.close();
+	}
+
+#if 0
+	
+	// 固有値と固有ベクトルが元の行列に対して正しいか検算する
+	for (int i = 0; i < EigenVectors.cols(); ++i) {
+		Eigen::VectorXd v = EigenVectors.col(i).real();
+		double lambda = EigenValues(i).real();
+
+		// A * v を計算
+		Eigen::VectorXd Av = Matrix_M * v;
+
+		// lambda * v を計算
+		Eigen::VectorXd lambda_v = lambda * v;
+
+		// 比較結果を表示
+		if ((Av - lambda_v).norm() < 1e-5) {  // 許容誤差を設定
+			std::cout << "Eigenvalue and Eigenvector are correct for index " << i << "." << std::endl;
+		}
+		else {
+			std::cout << "Eigenvalue and Eigenvector are incorrect for index " << i << "." << std::endl;
+			std::cout << "A * v: " << Av.transpose() << std::endl;
+			std::cout << "lambda * v: " << lambda_v.transpose() << std::endl;
+		}
+	}
+#endif
+
 
 	const int n_abs = InputPara.n_abs;
 	const int n_abs_1 = n_abs + 1;
@@ -106,25 +153,24 @@ int main(){
 
 		Eigen::MatrixXd Matrix_X = MakeMatrix_X(PulsePara, InputPara, pixel);
 
-		// Eigen::ColPivHouseholderQRによるQR分解の前処理
-		Eigen::ColPivHouseholderQR<Eigen::MatrixXcd> qr = EigenVectors.colPivHouseholderQr();
+		Eigen::MatrixXd EiVec = EigenVectors.real();
 
 		// arb行列の初期化
-		Eigen::MatrixXcd arb(Matrix_X.rows(), Matrix_X.cols());
+		Eigen::MatrixXd arb(Matrix_X.rows(), Matrix_X.cols());
 
-		for (int row = 0; row < Matrix_X.rows(); ++row) {
-			Eigen::VectorXcd i = Matrix_X.row(row).transpose(); // 各行を列ベクトルに変換
-			Eigen::VectorXcd solution = qr.solve(i);
-			arb.row(row) = solution.transpose(); // 解をarb行列の対応する行に設定
+		// 各ベクトルごとに計算を行い、結果を arb に格納します。
+		for (int i = 0; i < Matrix_X.rows(); ++i) {
+			Eigen::VectorXd b = Matrix_X.row(i); // 行ベクトルを取得
+			Eigen::VectorXd x = EiVec.colPivHouseholderQr().solve(b); // 連立方程式を解く
+
+			arb.row(i) = x;
 		}
-
-		arb *= -1;
-
+#if 0
 		std::ofstream file("arb.txt");
 
 		if (file.is_open()) {
 
-			file << arb.real() << std::endl;
+			file << arb << std::endl;
 
 			file.close();
 		}
@@ -135,7 +181,7 @@ int main(){
 
 			file_x.close();
 		}
-
+#endif
 		std::vector<double> time = linspace(0, InputPara.samples / InputPara.rate, static_cast<int>(InputPara.samples));
 
 		Eigen::MatrixXd pulse_total_0;

@@ -1,7 +1,8 @@
 #pragma once
 #include <vector>
 #include <Eigen/Dense>
-
+#include <vector>
+#include <algorithm>
 #include "Dump2Batch.h"
 
 struct InputParameters;
@@ -32,3 +33,8 @@ int InBlock(const std::vector<double>& Block, const double& x_deposit, const dou
 Eigen::MatrixXd MakeMatrix_M(const PulseParameters& PulsePara, const InputParameters& InputPara);
 
 Eigen::MatrixXd MakeMatrix_X(const PulseParameters& PulsePara, const InputParameters& InputPara, const std::vector<int>& pixel);
+
+// 比較関数：ベクトルの最初の要素の絶対値に基づいて比較
+bool compareByMagnitude(int i, int j, const Eigen::VectorXcd& eigenvalues);
+
+void SortEigen(Eigen::VectorXcd& EigenValues, Eigen::MatrixXcd& EigenVectors);
