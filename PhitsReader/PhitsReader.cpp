@@ -165,6 +165,40 @@ int main(){
 
 			arb.row(i) = x;
 		}
+
+		std::vector<double> time = linspace(0, InputPara.samples / InputPara.rate, static_cast<int>(InputPara.samples));
+
+		Eigen::MatrixXd pulse_total_0;
+		Eigen::MatrixXd pulse_total_1;
+
+		count = 0;
+		pulse_total_0.resize(pixel.size(), time.size());
+
+		for (int i = 0; i < pixel.size(); i++)
+		{
+			Eigen::MatrixXcd Matrix_t(n_abs_4, time.size());
+			Matrix_t.setZero();
+			for (int j = 0; j < n_abs_4; j++)
+			{
+				for (int k=0;k<time.size();k++)
+				{
+					Matrix_t(j, k) = arb(pixel[i], j) * EigenVectors(0, j) * std::exp(EigenValues(j) * time[k]);
+				}
+			}
+			pulse_total_0.row(i) = Matrix_t.colwise().sum().real();
+
+			std::ofstream file_t("t.txt");
+			if (file_t.is_open()) {
+
+				file_t << Matrix_t.real() << std::endl;
+
+				file_t.close();
+				int something = 0;
+				std::cin >> something;
+				something += 1;
+			}
+			count++;
+		}
 #if 0
 		std::ofstream file("arb.txt");
 
@@ -177,52 +211,29 @@ int main(){
 		std::ofstream file_x("x.txt");
 		if (file_x.is_open()) {
 
-			file_x <<Matrix_X << std::endl;
+			file_x << Matrix_X << std::endl;
 
 			file_x.close();
 		}
 #endif
-		std::vector<double> time = linspace(0, InputPara.samples / InputPara.rate, static_cast<int>(InputPara.samples));
-
-		Eigen::MatrixXd pulse_total_0;
-		Eigen::MatrixXd pulse_total_1;
-
-		count = 0;
-		pulse_total_0.resize(pixel.size(), time.size());
-
-		for (const int& pix : pixel)
-		{
-			Eigen::MatrixXcd Matrix_t(n_abs_4, time.size());
-			Matrix_t.setZero();
-			for (int j = 0; j <= n_abs_4; j++)
-			{
-				int counter = 0;
-				for (const auto& ti : time)
-				{
-					Matrix_t(j, counter) = arb(pix, j) * EigenVectors(0, j) * std::exp(EigenValues(j) * ti);
-					counter++;
-				}
-			}
-			pulse_total_0.row(count) = Matrix_t.colwise().sum().real();
-			count++;
-		}
 		count = 0;
 		pulse_total_1.resize(pixel.size(), time.size());
 
-		for (const int& pix : pixel)
+		for (int i=0;i<pixel.size();i++)
 		{
 			Eigen::MatrixXcd Matrix_t(n_abs_4, time.size());
 			Matrix_t.setZero();
-			for (int j = 0; j <= n_abs_4; j++)
+			for (int j = 0; j < n_abs_4; j++)
 			{
 				int counter = 0;
 				for (const auto& ti : time)
 				{
-					Matrix_t(j, counter) = arb(pix, j) * EigenVectors(n_abs_3, j) * std::exp(EigenValues(j) * ti);
+					Matrix_t(j, counter) = arb(pixel[i], j) * EigenVectors(n_abs_3, j) * std::exp(EigenValues(j) * ti);
 					counter++;
 				}
 			}
 			pulse_total_1.row(count) = Matrix_t.colwise().sum().real();
+			
 			count++;
 		}
 
