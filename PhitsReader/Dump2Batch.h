@@ -59,7 +59,7 @@ struct InputParameters
 InputParameters ReadInputJson(const std::string& InputPath);
 
 // dumpall.datをbatchにする関数
-void ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>>& batch);
+int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>>& batch);
 
 // batchをoutput.jsonに書き出す関数
 void WriteOutput(const std::map<int, std::map<int, EventInfo>>& batch, const std::string& output_file);

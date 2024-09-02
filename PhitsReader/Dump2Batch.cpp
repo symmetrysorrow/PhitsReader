@@ -94,7 +94,7 @@ InputParameters ReadInputJson(const std::string& InputPath) {
 }
 
 // dumpall.datをbatchにする関数
-void ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>>& batch) {
+int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>>& batch) {
     // 定数パラメーター
     constexpr double emin_electron = 0.1;
     constexpr double emin_photon = 0.001;
@@ -122,7 +122,7 @@ void ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo
 
     if (!file.is_open()) {
         std::cerr << "Failed to open dump file: " << DumpPath << std::endl;
-        return;
+        return -1;
     }
 
     std::string line;
@@ -287,6 +287,8 @@ void ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo
     file.close();
     history.clear();
     std::map<int, EventInfo>(history).swap(history);
+
+    return 0;
 }
 
 // batchをoutput.jsonに書き出す関数

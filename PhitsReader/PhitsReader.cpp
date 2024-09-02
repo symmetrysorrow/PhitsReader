@@ -31,7 +31,7 @@ int main(){
     InputParameters InputPara=ReadInputJson(InputPath);
     std::cout << "Input.json is parsed\n";
 #ifdef Python
-    DataPath += ("/" + InputPara.output+"/");
+    DataPath += ("/" + InputPara.output);
 #endif
 
 
@@ -40,7 +40,12 @@ int main(){
     std::cout << "Processing file...\n";
         
     std::map<int, std::map<int, EventInfo>> batch;
-	ReadDump(DumpPath, batch);
+	int ReadReturn = ReadDump(DumpPath, batch);
+
+	if(ReadReturn==-1)
+	{
+		return -1;
+	}
 
     std::cout<<"Finished\n";
 
