@@ -166,3 +166,27 @@ void SortEigen(Eigen::VectorXcd& EigenValues, Eigen::MatrixXcd& EigenVectors)
 
 	return;
 }
+
+void checkImaginaryPart(const Eigen::VectorXcd& vec)
+{
+	bool hasImaginaryPart = (vec.imag().array() != 0).any();
+
+	if (hasImaginaryPart) {
+		std::cout << "Warning: Vector contains non-zero imaginary parts!" << std::endl;
+	}
+	else {
+		std::cout << "No non-zero imaginary parts detected in the vector." << std::endl;
+	}
+}
+
+void checkImaginaryPart(const Eigen::MatrixXcd& mat)
+{
+	bool hasImaginaryPart = (mat.imag().array() != 0).any();
+
+	if (hasImaginaryPart) {
+		std::cout << "Warning: Matrix contains non-zero imaginary parts!" << std::endl;
+	}
+	else {
+		std::cout << "No non-zero imaginary parts detected in the matrix." << std::endl;
+	}
+}

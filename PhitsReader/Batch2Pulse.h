@@ -38,3 +38,6 @@ Eigen::MatrixXd MakeMatrix_X(const PulseParameters& PulsePara, const InputParame
 bool compareByMagnitude(int i, int j, const Eigen::VectorXcd& eigenvalues);
 
 void SortEigen(Eigen::VectorXcd& EigenValues, Eigen::MatrixXcd& EigenVectors);
+
+void checkImaginaryPart(const Eigen::VectorXcd& vec);
+void checkImaginaryPart(const Eigen::MatrixXcd& mat);

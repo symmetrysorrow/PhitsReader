@@ -6,15 +6,19 @@
 #include <map>
 #include <nlohmann/json.hpp>
 #include <iomanip>
+#include <thread>
+#include <mutex>
 #include "Batch2Pulse.h"
 #include"Dump2Batch.h"
 
-//#define Python
+#define Python
+
+bool DEBUG = true;
 
 #ifdef Python
-extern "C" __declspec(dllexport) void MakeOutput(const char* DataPath, const char* InputPath_char, const char* Output_FileName) {
+extern "C" __declspec(dllexport) int MakeOutput(const char* DataPath_char, const char* InputPath_char, const char* Output_FileName) {
 
-    std::string path(DataPath);
+    std::string DataPath(DataPath_char);
     std::string InputPath(InputPath_char);
     std::string output_file(Output_FileName);
 #else
@@ -39,15 +43,15 @@ int main(){
 
     std::cout<<"Finished\nWriting output.json...\n";
 
-    WriteOutput(batch, output_file);
+    //WriteOutput(batch, output_file);
+
+	std::cout << "Finished\n";
 
     PulseParameters PulsePara(InputPara);
-
-    std::cout << "Finished\n";
-
+	
 	// 出力ディレクトリを作成
-	std::filesystem::create_directories(DataPath + "/PulseCPP/Ch0");
-	std::filesystem::create_directories(DataPath + "/PulseCPP/CH1");
+	std::filesystem::create_directories(DataPath + "/Pulse/Ch0");
+	std::filesystem::create_directories(DataPath + "/Pulse/CH1");
 
     Eigen::MatrixXd Matrix_M=MakeMatrix_M(PulsePara, InputPara);
 
@@ -56,52 +60,8 @@ int main(){
 	Eigen::VectorXcd EigenValues = eigensolver.eigenvalues();
 	// 固有ベクトル
 	Eigen::MatrixXcd EigenVectors = eigensolver.eigenvectors();
-
-	SortEigen(EigenValues, EigenVectors);
-
-	std::ofstream file_m("vec.txt");
-
-	if (file_m.is_open()) {
-
-		file_m << std::scientific << std::setprecision(25) << EigenVectors.real() << std::endl;
-
-		file_m.close();
-	}
-
-	std::ofstream file_val("val.txt");
-
-	if (file_val.is_open()) {
-
-		file_val << std::scientific << std::setprecision(25) << EigenValues.real() << std::endl;
-
-		file_val.close();
-	}
-
-#if 0
 	
-	// 固有値と固有ベクトルが元の行列に対して正しいか検算する
-	for (int i = 0; i < EigenVectors.cols(); ++i) {
-		Eigen::VectorXd v = EigenVectors.col(i).real();
-		double lambda = EigenValues(i).real();
-
-		// A * v を計算
-		Eigen::VectorXd Av = Matrix_M * v;
-
-		// lambda * v を計算
-		Eigen::VectorXd lambda_v = lambda * v;
-
-		// 比較結果を表示
-		if ((Av - lambda_v).norm() < 1e-5) {  // 許容誤差を設定
-			std::cout << "Eigenvalue and Eigenvector are correct for index " << i << "." << std::endl;
-		}
-		else {
-			std::cout << "Eigenvalue and Eigenvector are incorrect for index " << i << "." << std::endl;
-			std::cout << "A * v: " << Av.transpose() << std::endl;
-			std::cout << "lambda * v: " << lambda_v.transpose() << std::endl;
-		}
-	}
-#endif
-
+	//SortEigen(EigenValues, EigenVectors);
 
 	const int n_abs = InputPara.n_abs;
 	const int n_abs_1 = n_abs + 1;
@@ -112,15 +72,9 @@ int main(){
 	const std::vector<double> Block = linspace(-1, 1, n_abs + 1);
 
 	int Counter = 0;
-	int sum = batch.size();
+	
 	for (const auto& outer_pair : batch) {
-		{
-			float progress = Counter == sum ? 100 : static_cast<float>(Counter) / sum * 100;
-			std::cout << "\rProgress:" << std::fixed << std::setprecision(2) << progress << "%";
-			std::cout.flush();
-			Counter++;
-		}
-
+		
 		std::vector<double> BlockDeposit(n_abs, 0.0);
 
 		InputPara.positions.clear();
@@ -130,8 +84,6 @@ int main(){
 			{
 				int Pixel = InBlock(Block, inner_pair.second.x_deposit[i], inner_pair.second.y_deposit[i], inner_pair.second.z_deposit[i]);
 				BlockDeposit[Pixel - 1] += inner_pair.second.E_deposit[i];
-				//std::cout << "E_dep[" << i << "]:" << std::scientific << std::setprecision(15) << inner_pair.second.E_deposit[i] << "\n";
-
 			}
 		}
 		for (auto& block_deposit : BlockDeposit)
@@ -152,18 +104,21 @@ int main(){
 		}
 
 		Eigen::MatrixXd Matrix_X = MakeMatrix_X(PulsePara, InputPara, pixel);
+		
 
 		Eigen::MatrixXd EiVec = EigenVectors.real();
 
 		// arb行列の初期化
 		Eigen::MatrixXd arb(Matrix_X.rows(), Matrix_X.cols());
 
+		arb.setZero();
+
 		// 各ベクトルごとに計算を行い、結果を arb に格納します。
 		for (int i = 0; i < Matrix_X.rows(); ++i) {
 			Eigen::VectorXd b = Matrix_X.row(i); // 行ベクトルを取得
 			Eigen::VectorXd x = EiVec.colPivHouseholderQr().solve(b); // 連立方程式を解く
-
 			arb.row(i) = x;
+
 		}
 
 		std::vector<double> time = linspace(0, InputPara.samples / InputPara.rate, static_cast<int>(InputPara.samples));
@@ -171,7 +126,6 @@ int main(){
 		Eigen::MatrixXd pulse_total_0;
 		Eigen::MatrixXd pulse_total_1;
 
-		count = 0;
 		pulse_total_0.resize(pixel.size(), time.size());
 
 		for (int i = 0; i < pixel.size(); i++)
@@ -186,55 +140,22 @@ int main(){
 				}
 			}
 			pulse_total_0.row(i) = Matrix_t.colwise().sum().real();
-
-			std::ofstream file_t("t.txt");
-			if (file_t.is_open()) {
-
-				file_t << Matrix_t.real() << std::endl;
-
-				file_t.close();
-				int something = 0;
-				std::cin >> something;
-				something += 1;
-			}
-			count++;
 		}
-#if 0
-		std::ofstream file("arb.txt");
 
-		if (file.is_open()) {
-
-			file << arb << std::endl;
-
-			file.close();
-		}
-		std::ofstream file_x("x.txt");
-		if (file_x.is_open()) {
-
-			file_x << Matrix_X << std::endl;
-
-			file_x.close();
-		}
-#endif
-		count = 0;
 		pulse_total_1.resize(pixel.size(), time.size());
 
-		for (int i=0;i<pixel.size();i++)
+		for (int i = 0; i < pixel.size(); i++)
 		{
 			Eigen::MatrixXcd Matrix_t(n_abs_4, time.size());
 			Matrix_t.setZero();
 			for (int j = 0; j < n_abs_4; j++)
 			{
-				int counter = 0;
-				for (const auto& ti : time)
+				for (int k = 0; k < time.size(); k++)
 				{
-					Matrix_t(j, counter) = arb(pixel[i], j) * EigenVectors(n_abs_3, j) * std::exp(EigenValues(j) * ti);
-					counter++;
+					Matrix_t(j, k) = arb(pixel[i], j) * EigenVectors(n_abs_3, j) * std::exp(EigenValues(j) * time[k]);
 				}
 			}
-			pulse_total_1.row(count) = Matrix_t.colwise().sum().real();
-			
-			count++;
+			pulse_total_0.row(i) = Matrix_t.colwise().sum().real();
 		}
 
 		pulse_total_0 *= -1;
