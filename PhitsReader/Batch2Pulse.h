@@ -20,6 +20,7 @@ struct PulseParameters {
     const double L_I;
     const double t_I;
 
+
     PulseParameters(const InputParameters& InputPara);
 };
 
@@ -31,7 +32,7 @@ int InBlock(const std::vector<double>& Block, const double& x_deposit, const dou
 
 Eigen::MatrixXd MakeMatrix_M(const PulseParameters& PulsePara, const InputParameters& InputPara);
 
-Eigen::MatrixXd MakeMatrix_X(const PulseParameters& PulsePara, const InputParameters& InputPara, const std::vector<int>& pixel,const std::vector<double>& Positions);
+Eigen::MatrixXd MakeMatrix_X(const PulseParameters& PulsePara, const InputParameters& InputPara, const std::vector<int>& pixel, const std::vector<double>& Positions);
 
 // 比較関数：ベクトルの最初の要素の絶対値に基づいて比較
 bool compareByMagnitude(int i, int j, const Eigen::VectorXcd& eigenvalues);
@@ -40,5 +41,3 @@ void SortEigen(Eigen::VectorXcd& EigenValues, Eigen::MatrixXcd& EigenVectors);
 
 void checkImaginaryPart(const Eigen::VectorXcd& vec);
 void checkImaginaryPart(const Eigen::MatrixXcd& mat);
-
-void MakePulse(const PulseParameters& PulsePara);

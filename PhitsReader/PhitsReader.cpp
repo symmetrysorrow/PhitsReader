@@ -13,7 +13,7 @@
 #include"Dump2Batch.h"
 
 //#define Python
-std::mutex mtx;
+
 bool DEBUG = true;
 
 #ifdef Python
@@ -42,17 +42,17 @@ int main(){
     std::map<int, std::map<int, EventInfo>> batch;
 	ReadDump(DumpPath, batch);
 
-    std::cout<<"Finished\nWriting output.json...\n";
+    std::cout<<"Finished\n";
 
     //WriteOutput(batch, output_file);
 
-	std::cout << "Finished\nConverting batch to pulse\n";
+	std::cout << "Converting to pulse...\n";
 
     PulseParameters PulsePara(InputPara);
 	
 	// 出力ディレクトリを作成
-	std::filesystem::create_directories(DataPath + "/Pulse/Ch0");
-	std::filesystem::create_directories(DataPath + "/Pulse/CH1");
+	std::filesystem::create_directories(DataPath + "/PulseCpp/Ch0");
+	std::filesystem::create_directories(DataPath + "/PulseCpp/CH1");
 
     Eigen::MatrixXd Matrix_M=MakeMatrix_M(PulsePara, InputPara);
 
@@ -71,11 +71,13 @@ int main(){
 	const int n_abs_4 = n_abs + 4;
 
 	const std::vector<double> Block = linspace(-1, 1, n_abs + 1);
+
+	int Counter = 0;
+	
+	concurrency::parallel_for_each(batch.begin(), batch.end(), [InputPara, EigenValues, EigenVectors, n_abs, n_abs_3, n_abs_4, Block, PulsePara, DataPath](const std::pair<const int, std::map<int, EventInfo>>& outer_pair) {
 		
-	concurrency::parallel_for_each(batch.begin(), batch.end(), [InputPara, EigenValues, EigenVectors,n_abs,n_abs_3,n_abs_4, Block,PulsePara, DataPath](const std::pair<const int, std::map<int, EventInfo>>& outer_pair) {
 		std::vector<double> BlockDeposit(n_abs, 0.0);
 
-		//InputPara.positions.clear();
 		std::vector<double> Positions;
 
 		for (const auto& inner_pair : outer_pair.second) {
@@ -103,6 +105,7 @@ int main(){
 		}
 
 		Eigen::MatrixXd Matrix_X = MakeMatrix_X(PulsePara, InputPara, pixel, Positions);
+		
 
 		Eigen::MatrixXd EiVec = EigenVectors.real();
 
@@ -116,6 +119,7 @@ int main(){
 			Eigen::VectorXd b = Matrix_X.row(i); // 行ベクトルを取得
 			Eigen::VectorXd x = EiVec.colPivHouseholderQr().solve(b); // 連立方程式を解く
 			arb.row(i) = x;
+
 		}
 
 		std::vector<double> time = linspace(0, InputPara.samples / InputPara.rate, static_cast<int>(InputPara.samples));
@@ -131,13 +135,14 @@ int main(){
 			Matrix_t.setZero();
 			for (int j = 0; j < n_abs_4; j++)
 			{
-				for (int k = 0; k < time.size(); k++)
+				for (int k=0;k<time.size();k++)
 				{
 					Matrix_t(j, k) = arb(pixel[i], j) * EigenVectors(0, j) * std::exp(EigenValues(j) * time[k]);
 				}
 			}
 			pulse_total_0.row(i) = Matrix_t.colwise().sum().real();
 		}
+		pulse_total_0 *= -1;
 
 		pulse_total_1.resize(pixel.size(), time.size());
 
@@ -152,44 +157,40 @@ int main(){
 					Matrix_t(j, k) = arb(pixel[i], j) * EigenVectors(n_abs_3, j) * std::exp(EigenValues(j) * time[k]);
 				}
 			}
-			pulse_total_0.row(i) = Matrix_t.colwise().sum().real();
+			pulse_total_1.row(i) = Matrix_t.colwise().sum().real();
 		}
 
-		pulse_total_0 *= -1;
 		pulse_total_1 *= -1;
 
 		Eigen::VectorXd pulse_0 = pulse_total_0.colwise().sum();
 		Eigen::VectorXd pulse_1 = pulse_total_1.colwise().sum();
 
-		std::string ChFile_0 = DataPath + "/Pulse/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
+		std::string ChFile_0 = DataPath + "/PulseCPP/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
 		std::ofstream outFile_0(ChFile_0);
-		if (!outFile_0)
-		{
+		if (!outFile_0) {
 			std::cerr << "ファイルを開けませんでした。" << std::endl;
 			return -1;
 		}
 
 		for (int i = 0; i < pulse_0.size(); ++i) {
-			outFile_0 << pulse_0(i) << "\n";
+			outFile_0 << pulse_0(i) << std::endl;
 		}
 
 		outFile_0.close();
 
-		std::string ChFile_1 = DataPath + "/Pulse/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
+		std::string ChFile_1 = DataPath + "/PulseCPP/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
 		std::ofstream outFile_1(ChFile_1);
 		if (!outFile_1) {
 			std::cerr << "ファイルを開けませんでした。" << std::endl;
 			return -1;
 		}
 
-		for (int i = 0; i < pulse_1.size(); ++i)
-		{
-			outFile_1 << pulse_1(i) << "\n";
+		for (int i = 0; i < pulse_1.size(); ++i) {
+			outFile_1 << pulse_1(i) << std::endl;
 		}
 
 		outFile_1.close();
 	});
-	
-	
+	std::cout << "Finished!";
     return 0;
 }
