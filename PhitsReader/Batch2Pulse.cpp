@@ -13,7 +13,7 @@ PulseParameters::PulseParameters(const InputParameters& InputPara)
     I(std::sqrt((InputPara.G_tes_bath* InputPara.T_c* (1 - std::pow(InputPara.T_bath / InputPara.T_c, InputPara.n))) / (InputPara.n * InputPara.R))),
     t_el(InputPara.L / (InputPara.R_l + InputPara.R * (1 + InputPara.beta))),
     L_I((InputPara.alpha* std::pow(I, 2)* InputPara.R) / (InputPara.G_tes_bath * InputPara.T_c)),
-    t_I(InputPara.C_tes / ((1 - L_I) * InputPara.G_tes_bath)) {}
+    t_I(InputPara.C_tes / ((1 - L_I) * InputPara.G_tes_bath)){}
 
 // 等差数列を作成する関数
 std::vector<double> linspace(double start, double stop, int num) {
@@ -100,7 +100,7 @@ Eigen::MatrixXd MakeMatrix_M(const PulseParameters& PulsePara, const InputParame
 	return Matrix_M;
 }
 
-Eigen::MatrixXd MakeMatrix_X(const PulseParameters& PulsePara, const InputParameters& InputPara, const std::vector<int>& pixel)
+Eigen::MatrixXd MakeMatrix_X(const PulseParameters& PulsePara, const InputParameters& InputPara, const std::vector<int>& pixel, const std::vector<double>& Positions)
 {
 	const int n_abs = InputPara.n_abs;
 	const int n_abs_1 = n_abs + 1;
@@ -117,7 +117,7 @@ Eigen::MatrixXd MakeMatrix_X(const PulseParameters& PulsePara, const InputParame
 	{
 		if (pix <= n_abs_2)
 		{
-			Matrix_X(pix, pix + 1) = InputPara.positions[pix - 1] * PulsePara.e_const / PulsePara.C_abs;
+			Matrix_X(pix, pix + 1) = Positions[pix - 1] * PulsePara.e_const / PulsePara.C_abs;
 		}
 	}
 
@@ -189,4 +189,9 @@ void checkImaginaryPart(const Eigen::MatrixXcd& mat)
 	else {
 		std::cout << "No non-zero imaginary parts detected in the matrix." << std::endl;
 	}
+}
+
+void MakePulse(const PulseParameters& PulsePara)
+{
+
 }
