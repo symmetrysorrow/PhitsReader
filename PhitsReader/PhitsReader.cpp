@@ -12,16 +12,16 @@
 #include "Batch2Pulse.h"
 #include"Dump2Batch.h"
 
-//#define Python
+#define Python
 
 bool DEBUG = true;
 
 #ifdef Python
-extern "C" __declspec(dllexport) int MakeOutput(const char* DataPath_char, const char* InputPath_char, const char* Output_FileName) {
+extern "C" __declspec(dllexport) int MakeOutput(const char* DataPath_char, const char* InputPath_char) {
 
     std::string DataPath(DataPath_char);
     std::string InputPath(InputPath_char);
-    std::string output_file(Output_FileName);
+    //std::string output_file(Output_FileName);
 #else
 int main(){
     std::string DataPath = ".";
@@ -51,8 +51,8 @@ int main(){
     PulseParameters PulsePara(InputPara);
 	
 	// 出力ディレクトリを作成
-	std::filesystem::create_directories(DataPath + "/PulseCpp/Ch0");
-	std::filesystem::create_directories(DataPath + "/PulseCpp/CH1");
+	std::filesystem::create_directories(DataPath + "/Pulse/Ch0");
+	std::filesystem::create_directories(DataPath + "/Pulse/CH1");
 
     Eigen::MatrixXd Matrix_M=MakeMatrix_M(PulsePara, InputPara);
 
@@ -165,10 +165,10 @@ int main(){
 		Eigen::VectorXd pulse_0 = pulse_total_0.colwise().sum();
 		Eigen::VectorXd pulse_1 = pulse_total_1.colwise().sum();
 
-		std::string ChFile_0 = DataPath + "/PulseCPP/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
+		std::string ChFile_0 = DataPath + "/Pulse/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
 		std::ofstream outFile_0(ChFile_0);
 		if (!outFile_0) {
-			std::cerr << "ファイルを開けませんでした。" << std::endl;
+			std::cerr << "Failed to open file:" <<ChFile_0<< std::endl;
 			return -1;
 		}
 
@@ -178,10 +178,10 @@ int main(){
 
 		outFile_0.close();
 
-		std::string ChFile_1 = DataPath + "/PulseCPP/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
+		std::string ChFile_1 = DataPath + "/Pulse/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
 		std::ofstream outFile_1(ChFile_1);
 		if (!outFile_1) {
-			std::cerr << "ファイルを開けませんでした。" << std::endl;
+			std::cerr << "Failed to open file:" <<ChFile_1<< std::endl;
 			return -1;
 		}
 
