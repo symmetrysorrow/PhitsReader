@@ -50,11 +50,9 @@ int main(){
 		return -1;
 	}
 
-	spinner_braille.complete("Completed!");
+	spinner_braille.complete("Completed");
 
     //WriteOutput(batch, output_file);
-
-	std::cout << "Converting to pulse...\n";
 
     PulseParameters PulsePara(InputPara);
 	
@@ -211,12 +209,12 @@ int main(){
 		// 進捗パーセンテージの表示（1%単位で更新）
 		if (current_percent > last_percent_displayed) {
 			last_percent_displayed = current_percent;
-			std::cout << "Progress: " << current_percent << "%\r" << std::flush;
+			std::cout << current_percent << "% Converting to pulse...\r" << std::flush;
 		}
 	});
 	// 進捗表示行を消去して、結果を表示
 	std::cout << "\r\033[K";  // カーソルを行の先頭に戻し、行をクリア
-	std::cout << u8"✔ Completed" << std::endl;
+	std::cout << u8"✓ Completed" << std::endl;
 	std::cout << "Finished!";
     return 0;
 }
