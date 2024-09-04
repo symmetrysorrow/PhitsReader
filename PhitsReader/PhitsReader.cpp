@@ -8,11 +8,11 @@
 #include <iomanip>
 #include <thread>
 #include <ppl.h> 
-#include <mutex>
+#include "SpinProgress.h"
 #include "Batch2Pulse.h"
 #include"Dump2Batch.h"
 
-#define Python
+//#define Python
 
 bool DEBUG = true;
 
@@ -37,17 +37,20 @@ int main(){
 
     std::string DumpPath = DataPath + "/dumpall.dat";
 
-    std::cout << "Processing file...\n";
+	SpinProgress spinner_braille(SpinProgress::Braille);
+	spinner_braille.set_message("Processing dump file...");
         
     std::map<int, std::map<int, EventInfo>> batch;
 	int ReadReturn = ReadDump(DumpPath, batch);
 
 	if(ReadReturn==-1)
 	{
+		spinner_braille.complete("Error!");
+		std::cerr << "Failed to open dump file: " << DumpPath << std::endl;
 		return -1;
 	}
 
-    std::cout<<"Finished\n";
+	spinner_braille.complete("Completed!");
 
     //WriteOutput(batch, output_file);
 

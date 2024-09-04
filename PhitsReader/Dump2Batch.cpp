@@ -121,7 +121,6 @@ int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>
     std::ifstream file(DumpPath, std::ios::binary);
 
     if (!file.is_open()) {
-        std::cerr << "Failed to open dump file: " << DumpPath << std::endl;
         return -1;
     }
 
