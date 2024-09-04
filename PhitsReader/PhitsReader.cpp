@@ -77,9 +77,14 @@ int main(){
 
 	const std::vector<double> Block = linspace(-1, 1, n_abs + 1);
 
-	int Counter = 0;
-	
-	concurrency::parallel_for_each(batch.begin(), batch.end(), [InputPara, EigenValues, EigenVectors, n_abs, n_abs_3, n_abs_4, Block, PulsePara, DataPath](const std::pair<const int, std::map<int, EventInfo>>& outer_pair) {
+	// 全体のサイズ
+	int total_size = static_cast<int>(batch.size());
+	// 処理した要素の数をカウントする原子変数
+	std::atomic<int> processed_count(0);
+	// 表示した進捗パーセンテージを追跡する
+	std::atomic<int> last_percent_displayed(0);
+
+	concurrency::parallel_for_each(batch.begin(), batch.end(), [&](const std::pair<const int, std::map<int, EventInfo>>& outer_pair) {
 		
 		std::vector<double> BlockDeposit(n_abs, 0.0);
 
@@ -195,7 +200,20 @@ int main(){
 		}
 
 		outFile_1.close();
+
+		// 処理した要素のカウントをインクリメント
+		int current_count = ++processed_count;
+		// 進捗パーセンテージの計算
+		int current_percent = (current_count * 100) / total_size;
+		// 進捗パーセンテージの表示（1%単位で更新）
+		if (current_percent > last_percent_displayed) {
+			last_percent_displayed = current_percent;
+			std::cout << "Progress: " << current_percent << "%\r" << std::flush;
+		}
 	});
+	// 進捗表示行を消去して、結果を表示
+	std::cout << "\r\033[K";  // カーソルを行の先頭に戻し、行をクリア
+	std::cout << u8"✔ Completed" << std::endl;
 	std::cout << "Finished!";
     return 0;
 }
