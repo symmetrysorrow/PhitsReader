@@ -11,29 +11,16 @@
 #include <mutex>
 #include "Batch2Pulse.h"
 #include"Dump2Batch.h"
+#include <concurrent_vector.h>
+#include"pulse2csv.h"
 
-#define Python
-
-bool DEBUG = true;
-
-#ifdef Python
-extern "C" __declspec(dllexport) int MakeOutput(const char* DataPath_char, const char* InputPath_char) {
-
-    std::string DataPath(DataPath_char);
-    std::string InputPath(InputPath_char);
-    //std::string output_file(Output_FileName);
-#else
 int main(){
     std::string DataPath = ".";
     std::string InputPath = "./input.json";
     std::string output_file = "output.json";
-#endif
+
     InputParameters InputPara=ReadInputJson(InputPath);
     std::cout << "Input.json is parsed\n";
-#ifdef Python
-    DataPath += ("/" + InputPara.output);
-#endif
-
 
     std::string DumpPath = DataPath + "/dumpall.dat";
 
@@ -78,8 +65,11 @@ int main(){
 	const std::vector<double> Block = linspace(-1, 1, n_abs + 1);
 
 	int Counter = 0;
+
+	concurrency::concurrent_vector<std::tuple<int, double, double>> PulseInfo_Ch0;
+	concurrency::concurrent_vector<std::tuple<int, double, double>> PulseInfo_Ch1;
 	
-	concurrency::parallel_for_each(batch.begin(), batch.end(), [InputPara, EigenValues, EigenVectors, n_abs, n_abs_3, n_abs_4, Block, PulsePara, DataPath](const std::pair<const int, std::map<int, EventInfo>>& outer_pair) {
+	concurrency::parallel_for_each(batch.begin(), batch.end(), [&](const std::pair<const int, std::map<int, EventInfo>>& outer_pair) {
 		
 		std::vector<double> BlockDeposit(n_abs, 0.0);
 
@@ -169,33 +159,36 @@ int main(){
 
 		Eigen::VectorXd pulse_0 = pulse_total_0.colwise().sum();
 		Eigen::VectorXd pulse_1 = pulse_total_1.colwise().sum();
-
-		std::string ChFile_0 = DataPath + "/Pulse/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
-		std::ofstream outFile_0(ChFile_0);
-		if (!outFile_0) {
-			std::cerr << "Failed to open file:" <<ChFile_0<< std::endl;
-			return -1;
-		}
-
-		for (int i = 0; i < pulse_0.size(); ++i) {
-			outFile_0 << pulse_0(i) << std::endl;
-		}
-
-		outFile_0.close();
-
-		std::string ChFile_1 = DataPath + "/Pulse/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
-		std::ofstream outFile_1(ChFile_1);
-		if (!outFile_1) {
-			std::cerr << "Failed to open file:" <<ChFile_1<< std::endl;
-			return -1;
-		}
-
-		for (int i = 0; i < pulse_1.size(); ++i) {
-			outFile_1 << pulse_1(i) << std::endl;
-		}
-
-		outFile_1.close();
+		
+		PulseInfo_Ch0.push_back(MakeCSV(pulse_0,InputPara,outer_pair.first));
+		PulseInfo_Ch1.push_back(MakeCSV(pulse_1, InputPara, outer_pair.first));
+		
 	});
+
+	std::string ChFile_0 = DataPath + "/output_TES0_with_noise.csv";
+	std::ofstream outFile_0(ChFile_0);
+	if (!outFile_0) {
+		std::cerr << "Failed to open file:" << ChFile_0 << std::endl;
+		return -1;
+	}
+	outFile_0 << ", height,rise\n";
+	for (const std::tuple<int,double,double>& info : PulseInfo_Ch0) {
+		outFile_0 << std::get<0>(info)<<","<<std::get<1>(info) << "," << std::get<2>(info) << "\n";
+	}
+	outFile_0.close();
+
+	std::string ChFile_1 = DataPath + "/output_TES1_with_noise.csv";
+	std::ofstream outFile_1(ChFile_1);
+	if (!outFile_1) {
+		std::cerr << "Failed to open file:" << ChFile_1 << std::endl;
+		return -1;
+	}
+	outFile_1 << ", height,rise\n";
+	for (const std::tuple<int, double, double>& info : PulseInfo_Ch1) {
+		outFile_1 << std::get<0>(info) << "," << std::get<1>(info) << "," << std::get<2>(info) << "\n";
+	}
+	outFile_1.close();
+
 	std::cout << "Finished!";
     return 0;
 }
