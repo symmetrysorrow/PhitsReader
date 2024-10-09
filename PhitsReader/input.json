@@ -17,9 +17,10 @@
     "n_abs": 101,
     "rate": 1000000.0,
     "samples": 10000.0,
-    "position": [],
+    "position": [6,12],
     "data_samples": 10000,
     "cutoff": 10000,
     "history": 1000000,
-    "output": "1332keV_51"
+    "output": 1.332,
+    "noise": true
 }

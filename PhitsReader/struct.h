@@ -35,11 +35,11 @@ struct InputParameters
     int n_abs;
     double rate;
     double samples;
-    std::vector<double> positions;
+    std::vector<int> positions;
     int data_samples;
     int cutoff;
     int history;
-    std::string output;
-
+    double output;
+    bool noise;
 };
 #endif
