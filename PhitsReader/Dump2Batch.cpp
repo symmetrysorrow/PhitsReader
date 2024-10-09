@@ -85,11 +85,14 @@ InputParameters ReadInputJson(const std::string& InputPath) {
     InputPara.n_abs = InputJson["n_abs"];
     InputPara.rate = InputJson["rate"];
     InputPara.samples = InputJson["samples"];
+    for (const auto& posi : InputJson["position"]) {
+        InputPara.positions.push_back(posi);
+    }
     InputPara.data_samples = InputJson["data_samples"];
     InputPara.cutoff = InputJson["cutoff"];
     InputPara.history = InputJson["history"];
     InputPara.output = InputJson["output"];
-
+    InputPara.noise = InputJson["noise"];
     return InputPara;
 }
 
@@ -101,6 +104,8 @@ int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>
 
     // all plot[0], one plot[eventnumber], no plot[-1]
     constexpr float event_number = -1;
+
+    constexpr double energy_threashold = 0.001;
 
     // 各イベントの情報をhistoryに代入し、適宜batchに入力する。最終結果はbatchに入る。
     std::map<int, EventInfo> history;
@@ -123,6 +128,8 @@ int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>
     if (!file.is_open()) {
         return -1;
     }
+
+    int counter = 0;
 
     std::string line;
     while (std::getline(file, line)) //ファイルの各行ごとに実行
@@ -148,7 +155,15 @@ int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>
                 {
                     if (no > 1)
                     {
-                        batch[static_cast<int>(nocas)] = history;
+                        double total_E_deposit = 0;
+                        for (const auto& [key, event] : history) {
+                            total_E_deposit += std::accumulate(event.E_deposit.begin(), event.E_deposit.end(), 0.0);
+                        }
+                        if (std::abs(total_E_deposit - 1.332) <= energy_threashold)
+                        {
+                            batch[static_cast<int>(nocas)] = history;
+                            counter++;
+                        }
                         history.clear();
                         std::map<int, EventInfo> emptyMap;
                         history.swap(emptyMap);
@@ -286,6 +301,7 @@ int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>
     file.close();
     history.clear();
     std::map<int, EventInfo>(history).swap(history);
+    std::cout << "num:" << counter << "\n";
 
     return 0;
 }

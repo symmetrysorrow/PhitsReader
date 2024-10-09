@@ -13,7 +13,8 @@ PulseParameters::PulseParameters(const InputParameters& InputPara)
     I(std::sqrt((InputPara.G_tes_bath* InputPara.T_c* (1 - std::pow(InputPara.T_bath / InputPara.T_c, InputPara.n))) / (InputPara.n * InputPara.R))),
     t_el(InputPara.L / (InputPara.R_l + InputPara.R * (1 + InputPara.beta))),
     L_I((InputPara.alpha* std::pow(I, 2)* InputPara.R) / (InputPara.G_tes_bath * InputPara.T_c)),
-    t_I(InputPara.C_tes / ((1 - L_I) * InputPara.G_tes_bath)) {}
+    t_I(InputPara.C_tes / ((1 - L_I) * InputPara.G_tes_bath)) {
+}
 
 // 等差数列を作成する関数
 std::vector<double> linspace(double start, double stop, int num) {
