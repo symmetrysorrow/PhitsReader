@@ -13,6 +13,7 @@
 #include"Dump2Batch.h"
 #include <concurrent_vector.h>
 #include"pulse2csv.h"
+#include "AddNoise.h"
 
 int main(){
     std::string DataPath = ".";
@@ -21,6 +22,8 @@ int main(){
 
     InputParameters InputPara=ReadInputJson(InputPath);
     std::cout << "Input.json is parsed\n";
+
+
 
     std::string DumpPath = DataPath + "/dumpall.dat";
 
@@ -68,6 +71,9 @@ int main(){
 
 	concurrency::concurrent_vector<std::tuple<int, double, double>> PulseInfo_Ch0;
 	concurrency::concurrent_vector<std::tuple<int, double, double>> PulseInfo_Ch1;
+
+	std::pair<std::vector<double>,std::vector<double>> Coeffs = MakeCoeff(InputPara);
+	Eigen::VectorXd Noise_dense = readLinesToEigen("./noise_spectral_total_alpha71beta1.6.dat");
 	
 	concurrency::parallel_for_each(batch.begin(), batch.end(), [&](const std::pair<const int, std::map<int, EventInfo>>& outer_pair) {
 		
@@ -159,9 +165,12 @@ int main(){
 
 		Eigen::VectorXd pulse_0 = pulse_total_0.colwise().sum();
 		Eigen::VectorXd pulse_1 = pulse_total_1.colwise().sum();
+
+		AddNoise(Noise_dense, pulse_0);
+		AddNoise(Noise_dense, pulse_1);
 		
-		PulseInfo_Ch0.push_back(MakeCSV(pulse_0,InputPara,outer_pair.first));
-		PulseInfo_Ch1.push_back(MakeCSV(pulse_1, InputPara, outer_pair.first));
+		PulseInfo_Ch0.push_back(MakeCSV(pulse_0,outer_pair.first,Coeffs.first,Coeffs.second));
+		PulseInfo_Ch1.push_back(MakeCSV(pulse_1, outer_pair.first,Coeffs.first,Coeffs.second));
 		
 	});
 

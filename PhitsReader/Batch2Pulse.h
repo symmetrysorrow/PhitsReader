@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <algorithm>
-#include "Dump2Batch.h"
+#include "struct.h"
 
 struct InputParameters;
 
@@ -19,7 +19,6 @@ struct PulseParameters {
     const double t_el;
     const double L_I;
     const double t_I;
-
 
     PulseParameters(const InputParameters& InputPara);
 };

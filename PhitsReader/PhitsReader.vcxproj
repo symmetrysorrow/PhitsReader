@@ -143,13 +143,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AddNoise.cpp" />
     <ClCompile Include="Batch2Pulse.cpp" />
-    <ClCompile Include="Batch2Pulse.h" />
+    <ClInclude Include="AddNoise.h" />
+    <ClInclude Include="Batch2Pulse.h" />
     <ClCompile Include="Dump2Batch.cpp" />
     <ClCompile Include="PhitsReader.cpp" />
+    <ClCompile Include="pulse2csv.cpp" />
+    <ClInclude Include="struct.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Dump2Batch.h" />
+    <ClInclude Include="Dump2Batch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pulse2csv.h" />
