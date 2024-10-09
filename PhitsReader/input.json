@@ -21,6 +21,6 @@
     "data_samples": 10000,
     "cutoff": 10000,
     "history": 1000000,
-    "output": 1.332,
+    "output": 0.662,
     "noise": true
 }

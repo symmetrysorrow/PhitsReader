@@ -51,8 +51,6 @@ int main(){
 
 		spinner.complete("Finished");
 
-		std::cout << "Converting to pulse...\n";
-
 		PulseParameters PulsePara(InputPara);
 #if 0
 		// 出力ディレクトリを作成
@@ -83,7 +81,12 @@ int main(){
 		concurrency::concurrent_vector<std::tuple<int, double, double>> PulseInfo_Ch1;
 
 		std::pair<std::vector<double>, std::vector<double>> Coeffs = MakeCoeff(InputPara);
-		Eigen::VectorXd Noise_dense = readLinesToEigen("./noise_spectral_total_alpha71beta1.6.dat");
+		std::string NoisePath = "./Noise/" + std::to_string(static_cast<int>(InputPara.output * 1000)) + "keV/noise_spectral_total_alpha71beta1.6.dat";
+		Eigen::VectorXd Noise_dense = readLinesToEigen(NoisePath);
+
+		size_t total_items = batch.size(); // 全体の要素数を取得
+		std::atomic<size_t> completed_items(0); // 完了したアイテム数
+		std::mutex output_mutex; // 出力用ミューテックス
 
 		concurrency::parallel_for_each(batch.begin(), batch.end(), [&](const std::pair<const int, std::map<int, EventInfo>>& outer_pair) {
 
@@ -184,7 +187,22 @@ int main(){
 			PulseInfo_Ch0.push_back(MakeCSV(pulse_0, outer_pair.first, Coeffs.first, Coeffs.second));
 			PulseInfo_Ch1.push_back(MakeCSV(pulse_1, outer_pair.first, Coeffs.first, Coeffs.second));
 
+			size_t completed = completed_items.fetch_add(1);
+
+			// 進捗を更新（1%ごと）
+			size_t progress = static_cast<size_t>((completed + 1) * 100 / total_items); // +1は現在のアイテムを含むため
+			if (progress > 0 && progress % 1 == 0) { // 1%ごとに更新
+				std::lock_guard<std::mutex> lock(output_mutex); // スレッドセーフな出力
+				std::cout << "\rConverting to Pulse: " << progress << "%" << std::flush; // プログレスを表示
+			}
+
 		});
+
+		// 最後に100%に書き換え
+		{
+			std::lock_guard<std::mutex> lock(output_mutex);
+			std::cout << "\nFinished\n";
+		}
 
 		std::string ChFile_0 = DumpPath + "/output_TES0_with_noise.csv";
 		std::ofstream outFile_0(ChFile_0);

@@ -75,7 +75,7 @@ public:
             spinner_thread.join();
         }
         std::cout << "\r\033[K";  // カーソルを行の先頭に戻し、行をクリア
-        std::cout << u8"✓ " << message << std::endl;
+        std::cout << message << std::endl;
     }
 
 private:
