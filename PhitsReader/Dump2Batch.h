@@ -18,7 +18,7 @@ std::vector<double> split_line(const std::string& line);
 InputParameters ReadInputJson(const std::string& InputPath);
 
 // dumpall.datをbatchにする関数
-int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>>& batch);
+int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>>& batch,const double& InputEnergy);
 
 // batchをoutput.jsonに書き出す関数
 void WriteOutput(const std::map<int, std::map<int, EventInfo>>& batch, const std::string& output_file);

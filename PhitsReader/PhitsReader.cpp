@@ -42,7 +42,7 @@ int main(){
 		std::string DumpFilePath = DumpPath + "\\dumpall.dat";
 
 		std::map<int, std::map<int, EventInfo>> batch;
-		int ReadReturn = ReadDump(DumpFilePath, batch);
+		int ReadReturn = ReadDump(DumpFilePath, batch,InputPara.output);
 
 		if (ReadReturn == -1)
 		{
@@ -199,25 +199,37 @@ int main(){
 
 		});
 
-		// 最後に100%に書き換え
 		{
 			std::lock_guard<std::mutex> lock(output_mutex);
 			std::cout << "\nFinished\n";
 		}
 
-		std::string ChFile_0 = DumpPath + "/output_TES0_with_noise.csv";
+		std::string ChFile_0;
+		if (InputPara.noise) {
+			ChFile_0 = DumpPath + "/output_TES0_with_noise.csv";
+		}
+		else {
+			ChFile_0 = DumpPath + "/output_TES0_without_noise.csv";
+		}
+		
 		std::ofstream outFile_0(ChFile_0);
 		if (!outFile_0) {
 			std::cerr << "Failed to open file:" << ChFile_0 << std::endl;
 			return -1;
 		}
-		outFile_0 << ", height,rise\n";
+		outFile_0 << ",height,rise\n";
 		for (const std::tuple<int, double, double>& info : PulseInfo_Ch0) {
 			outFile_0 << std::get<0>(info) << "," << std::get<1>(info) << "," << std::get<2>(info) << "\n";
 		}
 		outFile_0.close();
 
-		std::string ChFile_1 = DumpPath + "/output_TES1_with_noise.csv";
+		std::string ChFile_1;
+		if (InputPara.noise) {
+			ChFile_1 = DumpPath + "/output_TES1_with_noise.csv";
+		}
+		else {
+			ChFile_1 = DumpPath + "/output_TES1_without_noise.csv";
+		}
 		std::ofstream outFile_1(ChFile_1);
 		if (!outFile_1) {
 			std::cerr << "Failed to open file:" << ChFile_1 << std::endl;

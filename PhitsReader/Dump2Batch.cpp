@@ -97,7 +97,7 @@ InputParameters ReadInputJson(const std::string& InputPath) {
 }
 
 // dumpall.datをbatchにする関数
-int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>>& batch) {
+int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>>& batch, const double& InputEnergy) {
     // 定数パラメーター
     constexpr double emin_electron = 0.1;
     constexpr double emin_photon = 0.001;
@@ -158,7 +158,7 @@ int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>
                         for (const auto& [key, event] : history) {
                             total_E_deposit += std::accumulate(event.E_deposit.begin(), event.E_deposit.end(), 0.0);
                         }
-                        if (std::abs(total_E_deposit - 1.332) <= energy_threashold)
+                        if (std::abs(total_E_deposit - InputEnergy) <= energy_threashold)
                         {
                             batch[static_cast<int>(nocas)] = history;
                         }
