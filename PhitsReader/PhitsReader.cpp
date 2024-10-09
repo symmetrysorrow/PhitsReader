@@ -14,6 +14,7 @@
 #include <concurrent_vector.h>
 #include"pulse2csv.h"
 #include "AddNoise.h"
+#include "SpinProgress.h"
 
 int main(){
 
@@ -26,18 +27,19 @@ int main(){
 
 	std::vector<std::string> DumpPathes;
 
-	
-
 	for (const auto& posi : InputPara.positions) {
 		DumpPathes.push_back(DataPath+"\\"+ std::to_string(static_cast<int>(InputPara.output * 1000))+"keV_"+std::to_string(posi));
 	}
+
 	int TotalCounter = 1;
+
 	for (const auto& DumpPath : DumpPathes) {
-		std::cout << TotalCounter << "/" << DumpPathes.size() <<"\n";
+		std::cout << TotalCounter << "/" << DumpPathes.size() << "\n";
+
+		SpinProgress spinner;
+		spinner.set_message("Processing dumpall file...");
 
 		std::string DumpFilePath = DumpPath + "\\dumpall.dat";
-
-		std::cout << "Processing file...\n";
 
 		std::map<int, std::map<int, EventInfo>> batch;
 		int ReadReturn = ReadDump(DumpFilePath, batch);
@@ -47,7 +49,7 @@ int main(){
 			return -1;
 		}
 
-		std::cout << "Finished\n";
+		spinner.complete("Finished");
 
 		std::cout << "Converting to pulse...\n";
 
@@ -210,7 +212,7 @@ int main(){
 		TotalCounter++;
 	}
 
-	std::cout << "Finished!\n";
+	std::cout << "Completed!\n";
     
     return 0;
 }

@@ -150,6 +150,7 @@
     <ClCompile Include="Dump2Batch.cpp" />
     <ClCompile Include="PhitsReader.cpp" />
     <ClCompile Include="pulse2csv.cpp" />
+    <ClInclude Include="SpinProgress.h" />
     <ClInclude Include="struct.h" />
   </ItemGroup>
   <ItemGroup>
