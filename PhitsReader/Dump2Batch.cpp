@@ -126,10 +126,9 @@ int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>
     std::ifstream file(DumpPath, std::ios::binary);
 
     if (!file.is_open()) {
+        std::cout << "dump file is not open\n";
         return -1;
     }
-
-    int counter = 0;
 
     std::string line;
     while (std::getline(file, line)) //ファイルの各行ごとに実行
@@ -162,7 +161,6 @@ int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>
                         if (std::abs(total_E_deposit - 1.332) <= energy_threashold)
                         {
                             batch[static_cast<int>(nocas)] = history;
-                            counter++;
                         }
                         history.clear();
                         std::map<int, EventInfo> emptyMap;
@@ -301,7 +299,6 @@ int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>
     file.close();
     history.clear();
     std::map<int, EventInfo>(history).swap(history);
-    std::cout << "num:" << counter << "\n";
 
     return 0;
 }

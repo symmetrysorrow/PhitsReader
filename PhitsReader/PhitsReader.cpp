@@ -46,6 +46,7 @@ int main(){
 
 		if (ReadReturn == -1)
 		{
+			std::cout << "Error in dump file\n";
 			return -1;
 		}
 

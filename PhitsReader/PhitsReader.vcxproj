@@ -159,9 +159,6 @@
   <ItemGroup>
     <ClInclude Include="pulse2csv.h" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="SpinProgress.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
