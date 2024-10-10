@@ -53,11 +53,17 @@ int main(){
 		spinner.complete("Finished");
 
 		PulseParameters PulsePara(InputPara);
-		if (InputPara.SavePulse) {
+		if (InputPara.SavePulse && !InputPara.noise) {
 			// 出力ディレクトリを作成
 			std::filesystem::create_directories(DumpPath + "/Pulse/Ch0");
 			std::filesystem::create_directories(DumpPath + "/Pulse/CH1");
 		}
+		if (InputPara.SavePulse && InputPara.noise) {
+			// 出力ディレクトリを作成
+			std::filesystem::create_directories(DumpPath + "/Noise/Ch0");
+			std::filesystem::create_directories(DumpPath + "/Noise/CH1");
+		}
+
 
 		Eigen::MatrixXd Matrix_M = MakeMatrix_M(PulsePara, InputPara);
 
@@ -187,30 +193,35 @@ int main(){
 			}
 
 			if (InputPara.SavePulse) {
-				std::string PulseFile_0 = DumpPath + "/Pulse/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
+				std::string PulseFile_0; 
+				std::string PulseFile_1;
+				if (!InputPara.noise) {
+					PulseFile_0 = DumpPath + "/Pulse/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
+					PulseFile_1 = DumpPath + "/Pulse/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
+				}
+				else {
+					PulseFile_0 = DumpPath + "/Noise/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
+					PulseFile_1 = DumpPath + "/Noise/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
+				}
+
 				std::ofstream PulseoutFile_0(PulseFile_0);
 				if (!PulseoutFile_0) {
 					std::cerr << "Failed to open file:" << PulseFile_0 << std::endl;
 					return -1;
 				}
-
 				for (int i = 0; i < pulse_0.size(); ++i) {
 					PulseoutFile_0 << pulse_0(i) << std::endl;
 				}
-
 				PulseoutFile_0.close();
 
-				std::string PulseFile_1 = DumpPath + "/Pulse/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
 				std::ofstream PulseoutFile_1(PulseFile_1);
 				if (!PulseoutFile_1) {
 					std::cerr << "Failed to open file:" << PulseFile_1 << std::endl;
 					return -1;
 				}
-
 				for (int i = 0; i < pulse_1.size(); ++i) {
 					PulseoutFile_1 << pulse_1(i) << std::endl;
 				}
-
 				PulseoutFile_1.close();
 			}
 
