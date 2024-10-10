@@ -93,6 +93,7 @@ InputParameters ReadInputJson(const std::string& InputPath) {
     InputPara.history = InputJson["history"];
     InputPara.output = InputJson["output"];
     InputPara.noise = InputJson["noise"];
+    InputPara.SavePulse = InputJson["SavePulse"];
     return InputPara;
 }
 

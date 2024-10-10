@@ -41,5 +41,6 @@ struct InputParameters
     int history;
     double output;
     bool noise;
+    bool SavePulse;
 };
 #endif
