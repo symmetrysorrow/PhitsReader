@@ -27,7 +27,7 @@ struct PulseParameters {
 std::vector<double> linspace(double start, double stop, int num);
 
 // 入射したブロックを見つける関数（だと思う）
-int InBlock(const std::vector<double>& Block, const double& x_deposit, const double& y_deposit, const double& z_deposit);
+int InBlock(const InputParameters& InputPara,const std::vector<double>& Block, const double& x_deposit, const double& y_deposit, const double& z_deposit);
 
 Eigen::MatrixXd MakeMatrix_M(const PulseParameters& PulsePara, const InputParameters& InputPara);
 

@@ -64,7 +64,6 @@ int main(){
 			std::filesystem::create_directories(DumpPath + "/Noise/CH1");
 		}
 
-
 		Eigen::MatrixXd Matrix_M = MakeMatrix_M(PulsePara, InputPara);
 
 		Eigen::EigenSolver<Eigen::MatrixXd> eigensolver(Matrix_M);
@@ -81,7 +80,7 @@ int main(){
 		const int n_abs_3 = n_abs + 3;
 		const int n_abs_4 = n_abs + 4;
 
-		const std::vector<double> Block = linspace(-1, 1, n_abs + 1);
+		const std::vector<double> Block = linspace(-InputPara.length/20, InputPara.length/20, n_abs + 1);
 
 		int Counter = 0;
 
@@ -105,7 +104,7 @@ int main(){
 			for (const auto& inner_pair : outer_pair.second) {
 				for (int i = 0; i < inner_pair.second.x_deposit.size(); i++)
 				{
-					int Pixel = InBlock(Block, inner_pair.second.x_deposit[i], inner_pair.second.y_deposit[i], inner_pair.second.z_deposit[i]);
+					int Pixel = InBlock(InputPara,Block, inner_pair.second.x_deposit[i], inner_pair.second.y_deposit[i], inner_pair.second.z_deposit[i]);
 					BlockDeposit[Pixel - 1] += inner_pair.second.E_deposit[i];
 				}
 			}

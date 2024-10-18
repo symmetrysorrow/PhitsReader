@@ -32,8 +32,8 @@ std::vector<double> linspace(double start, double stop, int num) {
 }
 
 // なぞ関数1
-int InBlock(const std::vector<double>& Block, const double& x_deposit, const double& y_deposit, const double& z_deposit) {
-    if ((-1.0 <= x_deposit || x_deposit <= 1) && (-0.05 <= y_deposit || y_deposit <= 0.05) && (-0.1 <= z_deposit || z_deposit <= 0.0)) {
+int InBlock(const InputParameters& InputPara, const std::vector<double>& Block, const double& x_deposit, const double& y_deposit, const double& z_deposit) {
+    if ((-InputPara.length/20 <= x_deposit || x_deposit <= InputPara.length / 20) && (-InputPara.depth / 20 <= y_deposit || y_deposit <= InputPara.depth/20) && (-InputPara.height/10 <= z_deposit || z_deposit <= 0.0)) {
         for (int i = 0; i < Block.size(); ++i) {
             if (Block[i] >= x_deposit) {
                 return i;

@@ -82,6 +82,8 @@ InputParameters ReadInputJson(const std::string& InputPath) {
     InputPara.n = InputJson["n"];
     InputPara.E = InputJson["E"];
     InputPara.length = InputJson["length"];
+    InputPara.height = InputJson["height"];
+    InputPara.depth = InputJson["depth"];
     InputPara.n_abs = InputJson["n_abs"];
     InputPara.rate = InputJson["rate"];
     InputPara.samples = InputJson["samples"];

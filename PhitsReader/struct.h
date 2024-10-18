@@ -32,6 +32,8 @@ struct InputParameters
     double n;
     double E;
     double length;
+    double height;
+    double depth;
     int n_abs;
     double rate;
     double samples;
