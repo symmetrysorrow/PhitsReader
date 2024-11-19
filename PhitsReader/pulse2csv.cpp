@@ -176,34 +176,34 @@ void filtfilt(vectord B, vectord A, const vectord& X, vectord& Y)
 }
 
 std::tuple<double, double, int> peak_c(const std::vector<double>& data, int presamples, int w_max, int x_av, int w_av) {
-    // w_max ‚Ì”ÍˆÍ“à‚ÅÅ‘å’l‚Æ‚»‚ÌƒCƒ“ƒfƒbƒNƒX‚ğŒ©‚Â‚¯‚é
+    // w_max ï¿½Ì”ÍˆÍ“ï¿½ÅÅ‘ï¿½lï¿½Æ‚ï¿½ï¿½ÌƒCï¿½ï¿½ï¿½fï¿½bï¿½Nï¿½Xï¿½ï¿½ï¿½ï¿½Â‚ï¿½ï¿½ï¿½
     auto start_iter = data.begin() + presamples;
     auto end_iter = data.begin() + presamples + w_max;
 
     auto peak_iter = std::max_element(start_iter, end_iter);
-    double peak = *peak_iter;  // Å‘å’l
-    int peak_index = std::distance(data.begin(), peak_iter);  // Å‘å’l‚ÌƒCƒ“ƒfƒbƒNƒX
+    double peak = *peak_iter;  // ï¿½Å‘ï¿½l
+    int peak_index = std::distance(data.begin(), peak_iter);  // ï¿½Å‘ï¿½lï¿½ÌƒCï¿½ï¿½ï¿½fï¿½bï¿½Nï¿½X
 
-    // •½‹Ï’l‚ğŒvZ (peak_index - x_av ‚©‚ç w_av ‚Ì”ÍˆÍ)
+    // ï¿½ï¿½ï¿½Ï’lï¿½ï¿½vï¿½Z (peak_index - x_av ï¿½ï¿½ï¿½ï¿½ w_av ï¿½Ì”Íˆï¿½)
     int av_start = peak_index - x_av;
     double peak_av = std::accumulate(data.begin() + av_start, data.begin() + av_start + w_av, 0.0) / w_av;
 
-    // Œ‹‰Ê‚ğ•Ô‚· (ƒs[ƒN’lAü•Ó‚Ì•½‹Ï’lAƒs[ƒN‚ÌƒCƒ“ƒfƒbƒNƒX)
+    // ï¿½ï¿½ï¿½Ê‚ï¿½Ô‚ï¿½ (ï¿½sï¿½[ï¿½Nï¿½lï¿½Aï¿½ï¿½ï¿½Ó‚Ì•ï¿½ï¿½Ï’lï¿½Aï¿½sï¿½[ï¿½Nï¿½ÌƒCï¿½ï¿½ï¿½fï¿½bï¿½Nï¿½X)
     return { peak, peak_av, peak_index };
 }
 
 Eigen::VectorXd coder_array_to_eigen(const coder::array<double, 2U>& coder_arr) {
-    // coder_arr ‚ÌƒTƒCƒY‚ğŠm”F
+    // coder_arr ï¿½ÌƒTï¿½Cï¿½Yï¿½ï¿½mï¿½F
     if (coder_arr.size(0) == 0) {
         throw std::invalid_argument("Input coder::array is empty.");
     }
 
-    // Eigen::VectorXd ‚ğ‰Šú‰»
+    // Eigen::VectorXd ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     Eigen::VectorXd eigen_vec(coder_arr.size(0));
 
-    // coder::array ‚©‚ç Eigen ƒxƒNƒgƒ‹‚Ö‚Ìƒf[ƒ^ƒRƒs[
+    // coder::array ï¿½ï¿½ï¿½ï¿½ Eigen ï¿½xï¿½Nï¿½gï¿½ï¿½ï¿½Ö‚Ìƒfï¿½[ï¿½^ï¿½Rï¿½sï¿½[
     for (int i = 0; i < coder_arr.size(0); ++i) {
-        eigen_vec(i) = coder_arr[i]; // “ñŸŒ³”z—ñ‚Ì‚½‚ß—ñƒCƒ“ƒfƒbƒNƒX‚Í0
+        eigen_vec(i) = coder_arr[i]; // ï¿½ñŸŒï¿½ï¿½zï¿½ï¿½Ì‚ï¿½ï¿½ß—ï¿½Cï¿½ï¿½ï¿½fï¿½bï¿½Nï¿½Xï¿½ï¿½0
     }
 
     return eigen_vec;
@@ -213,7 +213,7 @@ std::tuple<double, int, int> risetime(const std::vector<double>& data, double pe
     int rise_90 = 0;
     int rise_10 = 0;
 
-    // peak_index ‚©‚ç‹t•ûŒü‚ÉƒXƒLƒƒƒ“‚µArise_high ‚É‘Š“–‚·‚éˆÊ’u‚ğ’T‚·
+    // peak_index ï¿½ï¿½ï¿½ï¿½tï¿½ï¿½ï¿½ï¿½ï¿½ÉƒXï¿½Lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Arise_high ï¿½É‘ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê’uï¿½ï¿½Tï¿½ï¿½
     for (int i = peak_index; i >= 0; --i) {
         if (data[i] <= peak * rise_high) {
             rise_90 = i;
@@ -221,7 +221,7 @@ std::tuple<double, int, int> risetime(const std::vector<double>& data, double pe
         }
     }
 
-    // rise_90 ‚©‚ç‹t•ûŒü‚ÉƒXƒLƒƒƒ“‚µArise_low ‚É‘Š“–‚·‚éˆÊ’u‚ğ’T‚·
+    // rise_90 ï¿½ï¿½ï¿½ï¿½tï¿½ï¿½ï¿½ï¿½ï¿½ÉƒXï¿½Lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Arise_low ï¿½É‘ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê’uï¿½ï¿½Tï¿½ï¿½
     for (int j = rise_90; j >= 0; --j) {
         if (data[j] <= peak * rise_low) {
             rise_10 = j;
@@ -229,21 +229,21 @@ std::tuple<double, int, int> risetime(const std::vector<double>& data, double pe
         }
     }
 
-    // ƒ‰ƒCƒYƒ^ƒCƒ€‚ğŒvZ
+    // ï¿½ï¿½ï¿½Cï¿½Yï¿½^ï¿½Cï¿½ï¿½ï¿½ï¿½vï¿½Z
     double rise = (rise_90 - rise_10) / rate;
 
-    // Œ‹‰Ê‚ğ•Ô‚· (ƒ‰ƒCƒYƒ^ƒCƒ€Arise_10Arise_90 ‚ÌƒCƒ“ƒfƒbƒNƒX)
+    // ï¿½ï¿½ï¿½Ê‚ï¿½Ô‚ï¿½ (ï¿½ï¿½ï¿½Cï¿½Yï¿½^ï¿½Cï¿½ï¿½ï¿½Arise_10ï¿½Arise_90 ï¿½ÌƒCï¿½ï¿½ï¿½fï¿½bï¿½Nï¿½X)
     return { rise, rise_10, rise_90 };
 }
 
-// Eigen::VectorXd ‚ğ coder::array<double, 2U> ‚É•ÏŠ·‚·‚éŠÖ”
+// Eigen::VectorXd ï¿½ï¿½ coder::array<double, 2U> ï¿½É•ÏŠï¿½ï¿½ï¿½ï¿½ï¿½Öï¿½
 void eigen_to_coder_array(const Eigen::VectorXd& eigen_vec, coder::array<double, 2U>& coder_arr) {
-    // coder::array ‚ÌƒTƒCƒY‚ğİ’è
-    coder_arr.set_size(eigen_vec.size(), 1);  // (s”, —ñ”)
+    // coder::array ï¿½ÌƒTï¿½Cï¿½Yï¿½ï¿½İ’ï¿½
+    coder_arr.set_size(eigen_vec.size(), 1);  // (ï¿½sï¿½ï¿½, ï¿½ï¿½)
 
-    // Eigen ƒxƒNƒgƒ‹‚©‚ç coder::array ‚Ö‚Ìƒf[ƒ^ƒRƒs[
+    // Eigen ï¿½xï¿½Nï¿½gï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ coder::array ï¿½Ö‚Ìƒfï¿½[ï¿½^ï¿½Rï¿½sï¿½[
     for (int i = 0; i < eigen_vec.size(); ++i) {
-        coder_arr[i + 1] = eigen_vec(i); // ƒCƒ“ƒfƒbƒNƒX‚ğ1n‚Ü‚è‚É’²®
+        coder_arr[i + 1] = eigen_vec(i); // ï¿½Cï¿½ï¿½ï¿½fï¿½bï¿½Nï¿½Xï¿½ï¿½1ï¿½nï¿½Ü‚ï¿½É’ï¿½ï¿½ï¿½
     }
 }
 
@@ -252,10 +252,10 @@ std::pair<std::vector<double>, std::vector<double>> MakeCoeff(const InputParamet
 
     coder::array<double, 2U> bd;
     coder::array<double, 2U> ad;
-    bd.set_size(1, 3);  // s—ñ‚ÌƒTƒCƒY‚ğİ’è (s, —ñ)
-    ad.set_size(1, 3);  // s—ñ‚ÌƒTƒCƒY‚ğİ’è (s, —ñ)
+    bd.set_size(1, 3);  // ï¿½sï¿½ï¿½ÌƒTï¿½Cï¿½Yï¿½ï¿½İ’ï¿½ (ï¿½s, ï¿½ï¿½)
+    ad.set_size(1, 3);  // ï¿½sï¿½ï¿½ÌƒTï¿½Cï¿½Yï¿½ï¿½İ’ï¿½ (ï¿½s, ï¿½ï¿½)
 
-    // besselfi ŠÖ”‚ÌŒÄ‚Ño‚µ
+    // besselfi ï¿½Öï¿½ï¿½ÌŒÄ‚Ñoï¿½ï¿½
     besselfi(N, InputPara.cutoff, InputPara.rate, bd, ad);
 
     vectord b_coeff = { bd[0],bd[1],bd[2] };
@@ -264,17 +264,24 @@ std::pair<std::vector<double>, std::vector<double>> MakeCoeff(const InputParamet
     return { b_coeff,a_coeff };
 }
 
-std::tuple<int, double, double> MakeCSV(const Eigen::VectorXd& Vector, const int& Event, const std::vector<double>& b_coeff, const std::vector<double>& a_coeff)
+std::vector<double> ApplyFilter(const Eigen::VectorXd& Vector,const std::vector<double>& b_coeff, const std::vector<double>& a_coeff)
 {
     std::vector<double> signal(Vector.data(), Vector.data() + Vector.size());
 
     vectord y_filter_out;
     filtfilt(b_coeff, a_coeff, signal, y_filter_out);
 
-    auto [peak, peak_av, peak_index] = peak_c(y_filter_out, 0, 10000, 10, 100);
+    return y_filter_out;
+}
 
-    auto [rise_time, rise_10, rise_90] = risetime(y_filter_out, peak_av, peak_index, 0.9, 0.1, 1000000);
+std::tuple<int, double, double> GetPulseInfo(const int& Event, const std::vector<double>& Signal)
+{
+    auto [peak, peak_av, peak_index] = peak_c(Signal, 0, 10000, 10, 100);
+
+    auto [rise_time, rise_10, rise_90] = risetime(Signal, peak_av, peak_index, 0.9, 0.1, 1000000);
 
     return { Event, peak_av,rise_time };
 }
+
+
 

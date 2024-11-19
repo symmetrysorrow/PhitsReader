@@ -33,10 +33,11 @@ std::tuple<double, double, int> peak_c(const std::vector<double>& data, int pres
 
 std::tuple<double, int, int> risetime(const std::vector<double>& data, double peak, int peak_index, double rise_high, double rise_low, double rate);
 
-// Eigen::VectorXd ‚ğ coder::array<double, 2U> ‚É•ÏŠ·‚·‚éŠÖ”
+// Eigen::VectorXd ï¿½ï¿½ coder::array<double, 2U> ï¿½É•ÏŠï¿½ï¿½ï¿½ï¿½ï¿½Öï¿½
 void eigen_to_coder_array(const Eigen::VectorXd& eigen_vec, coder::array<double, 2U>& coder_arr);
 
 std::pair<std::vector<double>, std::vector<double>> MakeCoeff(const InputParameters& InputPara);
 
-std::tuple<int, double, double> MakeCSV(const Eigen::VectorXd& Vector, const int& Event, const std::vector<double>& b_coeff, const std::vector<double>& a_coeff);
+std::vector<double> ApplyFilter(const Eigen::VectorXd& Vector, const std::vector<double>& b_coeff, const std::vector<double>& a_coeff);
 
+std::tuple<int, double, double> GetPulseInfo(const int& Event,const std::vector<double>& Signal);

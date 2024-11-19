@@ -13,7 +13,7 @@ struct EventInfo {
     std::vector<double> E_deposit;
 };
 
-// Input.json‚ÌŠeƒpƒ‰ƒ[ƒ^‚Ì\‘¢‘Ì
+// Input.jsonï¿½ÌŠeï¿½pï¿½ï¿½ï¿½ï¿½ï¿½[ï¿½^ï¿½Ì\ï¿½ï¿½ï¿½ï¿½
 struct InputParameters
 #if 1
 {

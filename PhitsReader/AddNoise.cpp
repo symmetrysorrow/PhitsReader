@@ -6,28 +6,28 @@
 
 Eigen::VectorXd inverseFFTNoise(const Eigen::VectorXcd& noise_spe, int noise_samples, int samples)
 {
-    // noise_spe ‚ÌƒTƒCƒY‚ª noise_samples ‚Ì2”{‚Å‚ ‚é‚±‚Æ‚ğŠm”F
+    // noise_spe ï¿½ÌƒTï¿½Cï¿½Yï¿½ï¿½ noise_samples ï¿½ï¿½2ï¿½{ï¿½Å‚ï¿½ï¿½é‚±ï¿½Æ‚ï¿½mï¿½F
     if (noise_spe.size() != 2 * noise_samples) {
         throw std::invalid_argument("noise_spe.size() must be 2 * noise_samples");
     }
 
-    // Eigen ‚Ì FFT ƒ‰ƒCƒuƒ‰ƒŠ‚ğg‚Á‚Ä‹tƒt[ƒŠƒG•ÏŠ·‚ğÀs
+    // Eigen ï¿½ï¿½ FFT ï¿½ï¿½ï¿½Cï¿½uï¿½ï¿½ï¿½ï¿½ï¿½ï¿½gï¿½ï¿½ï¿½Ä‹tï¿½tï¿½[ï¿½ï¿½ï¿½Gï¿½ÏŠï¿½ï¿½ï¿½ï¿½ï¿½s
     Eigen::FFT<double> fft;
 
-    // •¡‘f”‚ÌƒxƒNƒgƒ‹‚ğì¬
+    // ï¿½ï¿½ï¿½fï¿½ï¿½ï¿½Ìƒxï¿½Nï¿½gï¿½ï¿½ï¿½ï¿½ì¬
     Eigen::VectorXcd noise_time_domain(2 * noise_samples);
 
-    // ‹tƒt[ƒŠƒG•ÏŠ·‚ğÀsiü”g”—Ìˆæ ¨ ŠÔ—Ìˆæj
+    // ï¿½tï¿½tï¿½[ï¿½ï¿½ï¿½Gï¿½ÏŠï¿½ï¿½ï¿½ï¿½ï¿½sï¿½iï¿½ï¿½ï¿½gï¿½ï¿½ï¿½Ìˆï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Ô—Ìˆï¿½j
     fft.inv(noise_time_domain, noise_spe);
 
-    // À•”‚ğæ‚èo‚µAsamples •ª‚¾‚¯Ø‚è‹l‚ß‚é
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½oï¿½ï¿½ï¿½Asamples ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø‚ï¿½lï¿½ß‚ï¿½
     Eigen::VectorXd result(samples);
     for (int i = 0; i < samples; ++i) {
         if (i < noise_samples) {
-            result[i] = 2.0 * noise_time_domain[i].real();  // À•”‚ğæ‚èo‚µ2”{
+            result[i] = 2.0 * noise_time_domain[i].real();  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½oï¿½ï¿½2ï¿½{
         }
         else {
-            result[i] = 0.0;  // •K—v‚É‰‚¶‚Äc‚è‚ğ0‚Å–„‚ß‚é
+            result[i] = 0.0;  // ï¿½Kï¿½vï¿½É‰ï¿½ï¿½ï¿½ï¿½Äcï¿½ï¿½ï¿½0ï¿½Å–ï¿½ï¿½ß‚ï¿½
         }
     }
 
@@ -36,35 +36,35 @@ Eigen::VectorXd inverseFFTNoise(const Eigen::VectorXcd& noise_spe, int noise_sam
 
 Eigen::VectorXcd random_noise(const Eigen::VectorXd& spe, unsigned seed)
 {
-    // “ü—ÍƒxƒNƒgƒ‹‚ğ”½“]
+    // ï¿½ï¿½ï¿½Íƒxï¿½Nï¿½gï¿½ï¿½ï¿½ğ”½“]
     Eigen::VectorXd spe_re = spe.reverse();
 
-    // “ü—ÍƒxƒNƒgƒ‹‚Æ‚»‚Ì”½“]‚ğŒ‹‡‚µ‚Äƒ~ƒ‰[ƒŠƒ“ƒO
+    // ï¿½ï¿½ï¿½Íƒxï¿½Nï¿½gï¿½ï¿½ï¿½Æ‚ï¿½ï¿½Ì”ï¿½ï¿½]ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äƒ~ï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½O
     Eigen::VectorXd spe_mirror(spe.size() * 2);
     spe_mirror << spe, spe_re;
 
-    // ƒ‰ƒ“ƒ_ƒ€ˆÊ‘Š¶¬‚Ì‚½‚ß‚Ìİ’è
-    std::mt19937 generator(seed); // ƒV[ƒh‚ğİ’è‚µ‚½—”¶¬Ší
-    std::uniform_real_distribution<> dist(0.0, 2 * 3.141592); // 0‚©‚ç2ƒÎ‚Ìˆê—l•ª•z
+    // ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½ï¿½ï¿½Ê‘ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì‚ï¿½ï¿½ß‚Ìİ’ï¿½
+    std::mt19937 generator(seed); // ï¿½Vï¿½[ï¿½hï¿½ï¿½İ’è‚µï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    std::uniform_real_distribution<> dist(0.0, 2 * 3.141592); // 0ï¿½ï¿½ï¿½ï¿½2ï¿½Î‚Ìˆï¿½lï¿½ï¿½ï¿½z
 
-    // ƒ‰ƒ“ƒ_ƒ€ˆÊ‘Š‚ğg—p‚µ‚Ä•¡‘fƒxƒNƒgƒ‹‚ğ¶¬
+    // ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½ï¿½ï¿½Ê‘ï¿½ï¿½ï¿½gï¿½pï¿½ï¿½ï¿½Ä•ï¿½ï¿½fï¿½xï¿½Nï¿½gï¿½ï¿½ï¿½ğ¶ï¿½
     std::vector<std::complex<double>> complex_vec(spe_mirror.size());
     for (int i = 0; i < spe_mirror.size(); ++i) {
-        double phase = dist(generator);  // ƒ‰ƒ“ƒ_ƒ€ˆÊ‘Š
-        complex_vec[i] = std::polar(spe_mirror[i], phase); // •¡‘f”‚ğì¬
+        double phase = dist(generator);  // ï¿½ï¿½ï¿½ï¿½ï¿½_ï¿½ï¿½ï¿½Ê‘ï¿½
+        complex_vec[i] = std::polar(spe_mirror[i], phase); // ï¿½ï¿½ï¿½fï¿½ï¿½ï¿½ï¿½ì¬
     }
 
-    // ƒxƒNƒgƒ‹‚ÌŒã”¼•”•ª‚ğ‹¤–ğ‚É‚·‚é
+    // ï¿½xï¿½Nï¿½gï¿½ï¿½ï¿½ÌŒã”¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É‚ï¿½ï¿½ï¿½
     std::vector<std::complex<double>> complex_conj(spe.size());
     for (int i = 0; i < spe.size(); ++i) {
-        complex_conj[i] = std::conj(complex_vec[spe.size() + i]); // ‹¤–ğ•¡‘f”
+        complex_conj[i] = std::conj(complex_vec[spe.size() + i]); // ï¿½ï¿½ï¿½ğ•¡‘fï¿½ï¿½
     }
 
-    // Œ³‚Ì•”•ª‚Æ‹¤–ğ•”•ª‚ğŒ‹‡‚µ‚ÄŒ‹‰Ê‚ğì¬
+    // ï¿½ï¿½ï¿½Ì•ï¿½ï¿½ï¿½ï¿½Æ‹ï¿½ï¿½ğ•”•ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÄŒï¿½ï¿½Ê‚ï¿½ì¬
     Eigen::VectorXcd result(spe.size() * 2);
     for (int i = 0; i < spe.size(); ++i) {
-        result[i] = complex_vec[i]; // ƒIƒŠƒWƒiƒ‹‚Ì•¡‘f”•”•ª
-        result[spe.size() + i] = complex_conj[i]; // ‹¤–ğ•”•ª
+        result[i] = complex_vec[i]; // ï¿½Iï¿½ï¿½ï¿½Wï¿½iï¿½ï¿½ï¿½Ì•ï¿½ï¿½fï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        result[spe.size() + i] = complex_conj[i]; // ï¿½ï¿½ï¿½ğ•”•ï¿½
     }
 
     return result;
@@ -73,10 +73,10 @@ Eigen::VectorXcd random_noise(const Eigen::VectorXd& spe, unsigned seed)
 void AddNoise(const Eigen::VectorXd& Noise_dense, Eigen::VectorXd& Pulse)
 {
     int NoiseSamples = Noise_dense.size();
-    std::random_device rd;  // ”ñŒˆ’è“I‚È—”¶¬
-    std::mt19937 gen(rd()); // ƒƒ‹ƒZƒ“ƒkEƒcƒCƒXƒ^–@‚É‚æ‚é‹[——”¶¬Ší
+    std::random_device rd;  // ï¿½ñŒˆ’ï¿½Iï¿½È—ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    std::mt19937 gen(rd()); // ï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½ï¿½ï¿½kï¿½Eï¿½cï¿½Cï¿½Xï¿½^ï¿½@ï¿½É‚ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-    // 1‚©‚ç10000‚Ü‚Å‚Ì”ÍˆÍ‚Åƒ‰ƒ“ƒ_ƒ€‚È®”‚ğ¶¬‚·‚é•ª•z‚ğİ’è
+    // 1ï¿½ï¿½ï¿½ï¿½10000ï¿½Ü‚Å‚Ì”ÍˆÍ‚Åƒï¿½ï¿½ï¿½ï¿½_ï¿½ï¿½ï¿½Èï¿½ï¿½ï¿½ï¿½ğ¶ï¿½ï¿½ï¿½ï¿½é•ªï¿½zï¿½ï¿½İ’ï¿½
     std::uniform_int_distribution<> distrib(1, 10000);
     int count= distrib(gen);
 
@@ -97,13 +97,13 @@ Eigen::VectorXd readLinesToEigen(const std::string& filePath)
     std::vector<double> values;
     std::string line;
     while (std::getline(file, line)) {
-        // ‹ós‚ğƒXƒLƒbƒv
+        // ï¿½ï¿½sï¿½ï¿½Xï¿½Lï¿½bï¿½v
         if (line.empty()) {
             continue;
         }
 
         try {
-            // ƒXƒy[ƒX‚ğƒgƒŠƒ€‚µ‚Ä‚©‚çdouble‚É•ÏŠ·
+            // ï¿½Xï¿½yï¿½[ï¿½Xï¿½ï¿½gï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½doubleï¿½É•ÏŠï¿½
             double value = std::stod(line);
             values.push_back(value);
         }
@@ -117,7 +117,7 @@ Eigen::VectorXd readLinesToEigen(const std::string& filePath)
 
     file.close();
 
-    // VectorXd‚É•ÏŠ·
+    // VectorXdï¿½É•ÏŠï¿½
     Eigen::VectorXd result(values.size());
     for (size_t i = 0; i < values.size(); ++i) {
         result(i) = values[i];
