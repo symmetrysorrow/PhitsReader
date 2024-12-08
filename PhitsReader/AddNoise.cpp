@@ -3,6 +3,7 @@
 #include <random>
 #include<fstream>
 #include<iostream>
+#include<cmath>
 
 Eigen::VectorXd inverseFFTNoise(const Eigen::VectorXcd& noise_spe, int noise_samples, int samples)
 {
@@ -24,7 +25,7 @@ Eigen::VectorXd inverseFFTNoise(const Eigen::VectorXcd& noise_spe, int noise_sam
     Eigen::VectorXd result(samples);
     for (int i = 0; i < samples; ++i) {
         if (i < noise_samples) {
-            result[i] = 2.0 * noise_time_domain[i].real();  // ��������o��2�{
+            result[i] =  noise_time_domain[i].real();  // ��������o��2�{
         }
         else {
             result[i] = 0.0;  // �K�v�ɉ����Ďc���0�Ŗ��߂�
@@ -70,9 +71,12 @@ Eigen::VectorXcd random_noise(const Eigen::VectorXd& spe, unsigned seed)
     return result;
 }
 
-void AddNoise(const Eigen::VectorXd& Noise_dense, Eigen::VectorXd& Pulse)
+void AddNoise(const Eigen::VectorXd& Noise_dense, Eigen::VectorXd& Pulse, const double& rate)
 {
     int NoiseSamples = Noise_dense.size();
+
+    double delta_f=rate/NoiseSamples;
+    
     std::random_device rd;  // �񌈒�I�ȗ�������
     std::mt19937 gen(rd()); // �����Z���k�E�c�C�X�^�@�ɂ��[������������
 
@@ -80,9 +84,10 @@ void AddNoise(const Eigen::VectorXd& Noise_dense, Eigen::VectorXd& Pulse)
     std::uniform_int_distribution<> distrib(1, 10000);
     int count= distrib(gen);
 
-    Eigen::VectorXcd noise_spe = random_noise(Noise_dense, count) * NoiseSamples;
+    Eigen::VectorXcd noise_spe = random_noise(Noise_dense, count);
+    Eigen::VectorXcd ifft_input = noise_spe * std::sqrt(delta_f)*NoiseSamples*std::sqrt(2);
 
-    Eigen::VectorXd noise = inverseFFTNoise(noise_spe, NoiseSamples, Pulse.size());
+    Eigen::VectorXd noise = inverseFFTNoise(ifft_input, NoiseSamples, Pulse.size());
     Pulse += noise;
 }
 

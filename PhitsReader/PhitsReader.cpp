@@ -28,7 +28,7 @@ int main(){
 	std::vector<std::string> DumpPathes;
 
 	for (const auto& posi : InputPara.positions) {
-		DumpPathes.push_back(DataPath+"\\"+ std::to_string(static_cast<int>(InputPara.output * 1000))+"keV_"+std::to_string(posi));
+		DumpPathes.push_back(DataPath+"/"+ std::to_string(static_cast<int>(InputPara.E))+"keV_"+std::to_string(posi));
 	}
 
 	int TotalCounter = 1;
@@ -39,10 +39,10 @@ int main(){
 		SpinProgress spinner;
 		spinner.set_message("Processing dumpall file...");
 
-		std::string DumpFilePath = DumpPath + "\\dumpall.dat";
+		std::string DumpFilePath = DumpPath + "/dumpall.dat";
 
 		std::map<int, std::map<int, EventInfo>> batch;
-		int ReadReturn = ReadDump(DumpFilePath, batch,InputPara.output);
+		int ReadReturn = ReadDump(DumpFilePath, batch,InputPara.E/1000);
 
 		if (ReadReturn == -1)
 		{
@@ -53,19 +53,11 @@ int main(){
 		spinner.complete("Finished");
 
 		PulseParameters PulsePara(InputPara);
-		if (InputPara.SavePulse && !InputPara.noise) {
-			// 出力ディレクトリを作成
-			std::filesystem::create_directories(DumpPath + "/Pulse_mc/Ch0");
-			std::filesystem::create_directories(DumpPath + "/Pulse_mc/CH1");
-		}
-		if (InputPara.SavePulse && InputPara.noise) {
-			// 出力ディレクトリを作成
-			std::filesystem::create_directories(DumpPath + "/Pulse_mc_noise/Ch0");
-			std::filesystem::create_directories(DumpPath + "/Pulse_mc_noise/CH1");
-			std::filesystem::create_directories(DumpPath + "/Bessel/Ch0");
-			std::filesystem::create_directories(DumpPath + "/Bessel/CH1");
+		std::filesystem::create_directories(DumpPath + "/Pulse_ms/Ch0");
+		std::filesystem::create_directories(DumpPath + "/Pulse_ms/CH1");
 
-		}
+		std::filesystem::create_directories(DumpPath + "/Pulse_ms_noise/Ch0");
+		std::filesystem::create_directories(DumpPath + "/Pulse_ms_noise/CH1");
 
 		Eigen::MatrixXd Matrix_M = MakeMatrix_M(PulsePara, InputPara);
 
@@ -91,7 +83,7 @@ int main(){
 		concurrency::concurrent_vector<std::tuple<int, double, double>> PulseInfo_Ch1;
 
 		std::pair<std::vector<double>, std::vector<double>> Coeffs = MakeCoeff(InputPara);
-		std::string NoisePath = DumpPath + "/noise_spectral_total_alpha71beta1.6.dat";
+		std::string NoisePath = DataPath + "/noise_spectral_total_alpha71beta1.6.dat";
 		Eigen::VectorXd Noise_dense = readLinesToEigen(NoisePath);
 
 		size_t total_items = batch.size(); // 全体の要素数を取得
@@ -130,7 +122,6 @@ int main(){
 
 			Eigen::MatrixXd Matrix_X = MakeMatrix_X(PulsePara, InputPara, pixel, Positions);
 
-
 			Eigen::MatrixXd EiVec = EigenVectors.real();
 
 			// arb行列の初期化
@@ -143,7 +134,6 @@ int main(){
 				Eigen::VectorXd b = Matrix_X.row(i); // 行ベクトルを取得
 				Eigen::VectorXd x = EiVec.colPivHouseholderQr().solve(b); // 連立方程式を解く
 				arb.row(i) = x;
-
 			}
 
 			std::vector<double> time = linspace(0, InputPara.samples / InputPara.rate, static_cast<int>(InputPara.samples));
@@ -189,12 +179,35 @@ int main(){
 			Eigen::VectorXd pulse_0 = pulse_total_0.colwise().sum();
 			Eigen::VectorXd pulse_1 = pulse_total_1.colwise().sum();
 
-			if (InputPara.noise) {
-				AddNoise(Noise_dense, pulse_0);
-				AddNoise(Noise_dense, pulse_1);
+			std::string PulseFile_0 = DumpPath + "/Pulse_ms/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
+			std::string PulseFile_1 = DumpPath + "/Pulse_ms/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
+
+			std::ofstream PulseoutFile_0(PulseFile_0);
+			if (!PulseoutFile_0) {
+				std::cerr << "Failed to open file:" << PulseFile_0 << std::endl;
+				return -1;
 			}
-			std::vector<double> Noised_CH0(pulse_0.data(), pulse_0.data() + pulse_0.size());
-			std::vector<double> Noised_CH1(pulse_1.data(), pulse_1.data() + pulse_1.size());
+			for (int i = 0; i < pulse_0.size(); ++i) {
+				PulseoutFile_0 << pulse_0[i] << std::endl;
+			}
+			PulseoutFile_0.close();
+
+			std::ofstream PulseoutFile_1(PulseFile_1);
+			if (!PulseoutFile_1) {
+				std::cerr << "Failed to open file:" << PulseFile_1 << std::endl;
+				return -1;
+			}
+			for (int i = 0; i < pulse_0.size(); ++i) {
+				PulseoutFile_1 << pulse_1[i] << std::endl;
+			}
+			PulseoutFile_1.close();
+
+
+			AddNoise(Noise_dense, pulse_0,InputPara.rate);
+			AddNoise(Noise_dense, pulse_1, InputPara.rate);
+
+			PulseFile_0 = DumpPath + "/Pulse_ms_noise/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
+			PulseFile_1 = DumpPath + "/Pulse_ms_noise/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
 
 			std::vector<double> Filterd_CH0 = ApplyFilter(pulse_0, Coeffs.first, Coeffs.second);
 			std::vector<double> Filterd_CH1 = ApplyFilter(pulse_1, Coeffs.first, Coeffs.second);
@@ -202,63 +215,25 @@ int main(){
 			PulseInfo_Ch0.push_back(GetPulseInfo(outer_pair.first,Filterd_CH0));
 			PulseInfo_Ch1.push_back(GetPulseInfo(outer_pair.first,Filterd_CH1));
 
-			if (InputPara.SavePulse) {
-				std::string PulseFile_0;
-				std::string PulseFile_1;
-				if (!InputPara.noise) {
-					PulseFile_0 = DumpPath + "/Pulse_mc/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
-					PulseFile_1 = DumpPath + "/Pulse_mc/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
-				}
-				else {
-					PulseFile_0 = DumpPath + "/Bessel/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
-					PulseFile_1 = DumpPath + "/Bessel/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
-				}
-
-				std::ofstream PulseoutFile_0(PulseFile_0);
-				if (!PulseoutFile_0) {
-					std::cerr << "Failed to open file:" << PulseFile_0 << std::endl;
-					return -1;
-				}
-				for (int i = 0; i < Filterd_CH0.size(); ++i) {
-					PulseoutFile_0 << Filterd_CH0[i] << std::endl;
-				}
-				PulseoutFile_0.close();
-
-				std::ofstream PulseoutFile_1(PulseFile_1);
-				if (!PulseoutFile_1) {
-					std::cerr << "Failed to open file:" << PulseFile_1 << std::endl;
-					return -1;
-				}
-				for (int i = 0; i < Filterd_CH1.size(); ++i) {
-					PulseoutFile_1 << Filterd_CH1[i] << std::endl;
-				}
-				PulseoutFile_1.close();
-
-				if (InputPara.noise) {
-					std::string NoiseFile_0 = DumpPath + "/Pulse_mc_noise/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
-					std::string NoiseFile_1 = DumpPath + "/Pulse_mc_noise/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
-
-					std::ofstream NoiseOutFile_0(NoiseFile_0);
-					if (!NoiseOutFile_0) {
-						std::cerr << "Failed to open file:" << NoiseFile_0 << std::endl;
-						return -1;
-					}
-					for (int i = 0; i < Filterd_CH0.size(); ++i) {
-						NoiseOutFile_0 << Noised_CH0[i] << std::endl;
-					}
-					NoiseOutFile_0.close();
-
-					std::ofstream NoiseOutFile_1(NoiseFile_1);
-					if (!NoiseOutFile_1) {
-						std::cerr << "Failed to open file:" << NoiseFile_0 << std::endl;
-						return -1;
-					}
-					for (int i = 0; i < Filterd_CH1.size(); ++i) {
-						NoiseOutFile_1 << Noised_CH1[i] << std::endl;
-					}
-					NoiseOutFile_1.close();
-				}
+			std::ofstream PulseoutFile_0_n(PulseFile_0);
+			if (!PulseoutFile_0_n) {
+				std::cerr << "Failed to open file:" << PulseFile_0 << std::endl;
+				return -1;
 			}
+			for (int i = 0; i < Filterd_CH0.size(); ++i) {
+				PulseoutFile_0_n << Filterd_CH0[i] << std::endl;
+			}
+			PulseoutFile_0_n.close();
+
+			std::ofstream PulseoutFile_1_n(PulseFile_1);
+			if (!PulseoutFile_1_n) {
+				std::cerr << "Failed to open file:" << PulseFile_1 << std::endl;
+				return -1;
+			}
+			for (int i = 0; i < Filterd_CH1.size(); ++i) {
+				PulseoutFile_1_n << Filterd_CH1[i] << std::endl;
+			}
+			PulseoutFile_1_n.close();
 
 			size_t completed = completed_items.fetch_add(1);
 
@@ -268,50 +243,12 @@ int main(){
 				std::lock_guard<std::mutex> lock(output_mutex); // スレッドセーフな出力
 				std::cout << "\rConverting to Pulse: " << progress << "%" << std::flush; // プログレスを表示
 			}
-
 		});
 
 		{
 			std::lock_guard<std::mutex> lock(output_mutex);
 			std::cout << "\nFinished\n";
 		}
-
-		std::string ChFile_0;
-		if (InputPara.noise) {
-			ChFile_0 = DumpPath + "/output_TES0_with_noise.csv";
-		}
-		else {
-			ChFile_0 = DumpPath + "/output_TES0_without_noise.csv";
-		}
-		
-		std::ofstream outFile_0(ChFile_0);
-		if (!outFile_0) {
-			std::cerr << "Failed to open file:" << ChFile_0 << std::endl;
-			return -1;
-		}
-		outFile_0 << ",height,rise\n";
-		for (const std::tuple<int, double, double>& info : PulseInfo_Ch0) {
-			outFile_0 << std::get<0>(info) << "," << std::get<1>(info) << "," << std::get<2>(info) << "\n";
-		}
-		outFile_0.close();
-
-		std::string ChFile_1;
-		if (InputPara.noise) {
-			ChFile_1 = DumpPath + "/output_TES1_with_noise.csv";
-		}
-		else {
-			ChFile_1 = DumpPath + "/output_TES1_without_noise.csv";
-		}
-		std::ofstream outFile_1(ChFile_1);
-		if (!outFile_1) {
-			std::cerr << "Failed to open file:" << ChFile_1 << std::endl;
-			return -1;
-		}
-		outFile_1 << ",height,rise\n";
-		for (const std::tuple<int, double, double>& info : PulseInfo_Ch1) {
-			outFile_1 << std::get<0>(info) << "," << std::get<1>(info) << "," << std::get<2>(info) << "\n";
-		}
-		outFile_1.close();
 		TotalCounter++;
 	}
 

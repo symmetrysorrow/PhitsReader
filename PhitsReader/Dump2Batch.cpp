@@ -90,12 +90,8 @@ InputParameters ReadInputJson(const std::string& InputPath) {
     for (const auto& posi : InputJson["position"]) {
         InputPara.positions.push_back(posi);
     }
-    InputPara.data_samples = InputJson["data_samples"];
     InputPara.cutoff = InputJson["cutoff"];
     InputPara.history = InputJson["history"];
-    InputPara.output = InputJson["output"];
-    InputPara.noise = InputJson["noise"];
-    InputPara.SavePulse = InputJson["SavePulse"];
     return InputPara;
 }
 
@@ -129,7 +125,7 @@ int ReadDump(const std::string& DumpPath, std::map<int, std::map<int, EventInfo>
     std::ifstream file(DumpPath, std::ios::binary);
 
     if (!file.is_open()) {
-        std::cout << "dump file is not open\n";
+        std::cout << DumpPath <<" is not open\n";
         return -1;
     }
 

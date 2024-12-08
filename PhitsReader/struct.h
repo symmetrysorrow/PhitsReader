@@ -38,11 +38,7 @@ struct InputParameters
     double rate;
     double samples;
     std::vector<int> positions;
-    int data_samples;
     int cutoff;
     int history;
-    double output;
-    bool noise;
-    bool SavePulse;
 };
 #endif
