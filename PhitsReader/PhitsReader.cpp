@@ -209,19 +209,19 @@ int main(){
 			PulseFile_0 = DumpPath + "/Pulse_ms_noise/Ch0/CH0_" + std::to_string(outer_pair.first) + ".dat";
 			PulseFile_1 = DumpPath + "/Pulse_ms_noise/Ch1/CH1_" + std::to_string(outer_pair.first) + ".dat";
 
-			std::vector<double> Filterd_CH0 = ApplyFilter(pulse_0, Coeffs.first, Coeffs.second);
-			std::vector<double> Filterd_CH1 = ApplyFilter(pulse_1, Coeffs.first, Coeffs.second);
+			//std::vector<double> Filterd_CH0 = ApplyFilter(pulse_0, Coeffs.first, Coeffs.second);
+			//std::vector<double> Filterd_CH1 = ApplyFilter(pulse_1, Coeffs.first, Coeffs.second);
 
-			PulseInfo_Ch0.push_back(GetPulseInfo(outer_pair.first,Filterd_CH0));
-			PulseInfo_Ch1.push_back(GetPulseInfo(outer_pair.first,Filterd_CH1));
+			//PulseInfo_Ch0.push_back(GetPulseInfo(outer_pair.first,Filterd_CH0));
+			//PulseInfo_Ch1.push_back(GetPulseInfo(outer_pair.first,Filterd_CH1));
 
 			std::ofstream PulseoutFile_0_n(PulseFile_0);
 			if (!PulseoutFile_0_n) {
 				std::cerr << "Failed to open file:" << PulseFile_0 << std::endl;
 				return -1;
 			}
-			for (int i = 0; i < Filterd_CH0.size(); ++i) {
-				PulseoutFile_0_n << Filterd_CH0[i] << std::endl;
+			for (int i = 0; i < pulse_0 .size(); ++i) {
+				PulseoutFile_0_n << pulse_0[i] << std::endl;
 			}
 			PulseoutFile_0_n.close();
 
@@ -230,8 +230,8 @@ int main(){
 				std::cerr << "Failed to open file:" << PulseFile_1 << std::endl;
 				return -1;
 			}
-			for (int i = 0; i < Filterd_CH1.size(); ++i) {
-				PulseoutFile_1_n << Filterd_CH1[i] << std::endl;
+			for (int i = 0; i < pulse_1.size(); ++i) {
+				PulseoutFile_1_n << pulse_1[i] << std::endl;
 			}
 			PulseoutFile_1_n.close();
 
